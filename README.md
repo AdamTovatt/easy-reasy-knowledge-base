@@ -43,10 +43,20 @@ EasyReasy.KnowledgeBase is a modular system designed for building intelligent kn
 ## Quick Start
 
 ```csharp
+using EasyReasy.KnowledgeBase;
+using EasyReasy.KnowledgeBase.BertTokenization;
+using EasyReasy.KnowledgeBase.OllamaGeneration;
+using EasyReasy.KnowledgeBase.Searching;
+using EasyReasy.KnowledgeBase.Storage.IntegratedVectorStore;
+using EasyReasy.KnowledgeBase.Storage.Sqlite;
+using EasyReasy.KnowledgeBase.Indexing;
+using EasyReasy.VectorStorage;
+
 // Set up services
 BertTokenizer tokenizer = await BertTokenizer.CreateAsync();
 EasyReasyOllamaEmbeddingService embeddingService = await EasyReasyOllamaEmbeddingService.CreateAsync(
     baseUrl: "https://your-ollama-server.com",
+    apiKey: "your-api-key",
     modelName: "nomic-embed-text");
 
 // Create storage
@@ -62,6 +72,7 @@ ISearchableKnowledgeBase knowledgeBase = new SearchableKnowledgeBase(
 
 // Index documents
 IIndexer indexer = knowledgeBase.CreateIndexer();
+IFileSourceProvider fileSourceProvider = new YourFileSourceProvider(); // You need to implement this
 foreach (IFileSource fileSource in await fileSourceProvider.GetAllFilesAsync())
 {
     await indexer.ConsumeAsync(fileSource);
