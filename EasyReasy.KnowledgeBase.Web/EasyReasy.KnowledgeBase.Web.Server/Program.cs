@@ -1,3 +1,4 @@
+using EasyReasy.EnvironmentVariables;
 
 namespace EasyReasy.KnowledgeBase.Web.Server
 {
@@ -5,6 +6,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server
     {
         public static void Main(string[] args)
         {
+            EnvironmentVariableHelper.ValidateVariableNamesIn(typeof(EnvironmentVariables));
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.

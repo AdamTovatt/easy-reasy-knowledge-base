@@ -13,6 +13,9 @@
 *.userosscache
 *.sln.docstates
 
+# Launch settings with sensitive environment variables
+**/Properties/launchSettings.json
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
