@@ -1,5 +1,4 @@
 using EasyReasy.KnowledgeBase.Models;
-using static System.Collections.Specialized.BitVector32;
 
 namespace EasyReasy.KnowledgeBase.Storage.Sqlite.Tests
 {
@@ -502,7 +501,5 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite.Tests
             Assert.IsNull(retrieved.Summary);
             Assert.IsNull(retrieved.AdditionalContext);
         }
-
-
     }
 }

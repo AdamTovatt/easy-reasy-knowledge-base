@@ -170,7 +170,7 @@ namespace EasyReasy.KnowledgeBase.OllamaGeneration
                 // Create a test embedding request with minimal text
                 EmbeddingRequest request = new EmbeddingRequest(modelName, "test");
                 EmbeddingResponse response = await client.Embeddings.GetEmbeddingsAsync(request, cancellationToken);
-                
+
                 return response.Embeddings.Length;
             }
             catch (Exception exception) when (exception is not OperationCanceledException)

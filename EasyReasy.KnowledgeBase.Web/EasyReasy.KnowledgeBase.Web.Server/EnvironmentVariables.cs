@@ -15,6 +15,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server
         public static readonly VariableName DatabaseConnectionString = new VariableName("DATABASE_CONNECTION_STRING");
 
         /// <summary>
+        /// Path where vector store data will be saved.
+        /// </summary>
+        [EnvironmentVariableName(minLength: 3)]
+        public static readonly VariableName VectorStoreSavePath = new VariableName("VECTOR_STORE_SAVE_PATH");
+
+        /// <summary>
         /// Ollama server URLs (e.g., OLLAMA_SERVER_URL_1, OLLAMA_SERVER_URL_2).
         /// </summary>
         [EnvironmentVariableNameRange(minCount: 1)]

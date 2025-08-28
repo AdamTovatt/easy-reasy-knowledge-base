@@ -14,6 +14,7 @@
     <PackageReference Include="EasyReasy.Auth" Version="1.3.0" />
     <PackageReference Include="EasyReasy.EnvironmentVariables" Version="1.2.2" />
     <PackageReference Include="EasyReasy.FileStorage" Version="1.0.0" />
+    <PackageReference Include="EasyReasy.Ollama.Client" Version="1.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
       <Version>8.*-*</Version>
     </PackageReference>
@@ -21,6 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\EasyReasy.KnowledgeBase.BertTokenization\EasyReasy.KnowledgeBase.BertTokenization.csproj" />
+    <ProjectReference Include="..\..\EasyReasy.KnowledgeBase.OllamaGeneration\EasyReasy.KnowledgeBase.OllamaGeneration.csproj" />
+    <ProjectReference Include="..\..\EasyReasy.KnowledgeBase.Storage.IntegratedVectorStore\EasyReasy.KnowledgeBase.Storage.IntegratedVectorStore.csproj" />
+    <ProjectReference Include="..\..\EasyReasy.KnowledgeBase.Storage.Sqlite\EasyReasy.KnowledgeBase.Storage.Sqlite.csproj" />
+    <ProjectReference Include="..\..\EasyReasy.KnowledgeBase\EasyReasy.KnowledgeBase.csproj" />
     <ProjectReference Include="..\easyreasy.knowledgebase.web.client\easyreasy.knowledgebase.web.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

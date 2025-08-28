@@ -119,7 +119,7 @@ namespace EasyReasy.KnowledgeBase.Indexing
             file.ProcessedAt = DateTime.UtcNow;
             file.Status = IndexingStatus.Indexed;
             await _searchableKnowledgeStore.Files.UpdateAsync(file);
-            
+
             return true;
         }
 

@@ -141,7 +141,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite.Tests
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0, "Shared section");
             section.AdditionalContext = "Shared context";
             await _sectionStore.AddAsync(section);
-            
+
             foreach (KnowledgeFileChunk chunk in section.Chunks)
             {
                 await _chunkStore.AddAsync(chunk);
@@ -399,8 +399,6 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite.Tests
                 Assert.AreEqual(section.AdditionalContext, result.AdditionalContext);
             }
         }
-
-
 
         [TestMethod]
         public async Task Store_ShouldHandleManySections()

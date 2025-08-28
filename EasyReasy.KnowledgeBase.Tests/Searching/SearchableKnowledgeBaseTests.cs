@@ -3,17 +3,17 @@ using EasyReasy.KnowledgeBase.BertTokenization;
 using EasyReasy.KnowledgeBase.Chunking;
 using EasyReasy.KnowledgeBase.ConfidenceRating;
 using EasyReasy.KnowledgeBase.Generation;
+using EasyReasy.KnowledgeBase.Indexing;
 using EasyReasy.KnowledgeBase.Models;
 using EasyReasy.KnowledgeBase.OllamaGeneration;
-using EasyReasy.KnowledgeBase.Indexing;
 using EasyReasy.KnowledgeBase.Searching;
 using EasyReasy.KnowledgeBase.Storage.IntegratedVectorStore;
 using EasyReasy.KnowledgeBase.Storage.Sqlite;
 using EasyReasy.KnowledgeBase.Tests.TestFileSources;
 using EasyReasy.KnowledgeBase.Tests.TestUtilities;
+using EasyReasy.VectorStorage;
 using System.Diagnostics;
 using System.Reflection;
-using EasyReasy.VectorStorage;
 
 namespace EasyReasy.KnowledgeBase.Tests.Searching
 {

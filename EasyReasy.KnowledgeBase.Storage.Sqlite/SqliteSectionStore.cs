@@ -217,7 +217,5 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
             int rowsAffected = await command.ExecuteNonQueryAsync();
             return rowsAffected > 0;
         }
-
-
     }
 }

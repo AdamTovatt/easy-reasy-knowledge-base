@@ -31,7 +31,7 @@
   <ItemGroup>
     <PackageReference Include="EasyReasy" Version="1.0.2" />
     <PackageReference Include="EasyReasy.EnvironmentVariables" Version="1.2.2" />
-    <PackageReference Include="EasyReasy.Ollama.Client" Version="1.0.1" />
+    <PackageReference Include="EasyReasy.Ollama.Client" Version="1.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.12.6" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="1.4.3" />

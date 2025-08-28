@@ -1,6 +1,6 @@
 using EasyReasy.EnvironmentVariables;
-using EasyReasy.KnowledgeBase.Generation;
-using EasyReasy.KnowledgeBase.OllamaGeneration;
+using EasyReasy.KnowledgeBase.Web.Server.Configuration;
+using Microsoft.AspNetCore.Http.Json;
 
 namespace EasyReasy.KnowledgeBase.Web.Server
 {
@@ -12,8 +12,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+            // Configure JSON serialization to use camelCase
+            builder.Services.Configure<JsonOptions>(options =>
+            {
+                options.SerializerOptions.PropertyNamingPolicy = JsonConfiguration.DefaultOptions.PropertyNamingPolicy;
+                options.SerializerOptions.PropertyNameCaseInsensitive = JsonConfiguration.DefaultOptions.PropertyNameCaseInsensitive;
+            });
+
             // Add services to the container.
-            await ConfigureServicesAsync(builder.Services);
+            await AiServiceConfigurator.ConfigureAllAiServicesAsync(builder.Services);
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -41,21 +48,6 @@ namespace EasyReasy.KnowledgeBase.Web.Server
             app.MapFallbackToFile("/index.html");
 
             app.Run();
-        }
-
-        private static async Task ConfigureServicesAsync(IServiceCollection services)
-        {
-            // Configure embedding service
-            string baseUrl = EnvironmentVariables.OllamaServerUrls.GetAllValues().First();
-            string apiKey = EnvironmentVariables.OllamaServerApiKeys.GetAllValues().First();
-            string modelName = EnvironmentVariables.OllamaEmbeddingModelName.GetValue();
-
-            IEmbeddingService embeddingService = await EasyReasyOllamaEmbeddingService.CreateAsync(baseUrl, apiKey, modelName);
-            services.AddSingleton(embeddingService);
-
-            // Configure one-shot service (for AI text processing like summarization, question generation, etc.)
-            IOneShotService oneShotService = await EasyReasyOllamaOneShotService.CreateAsync(baseUrl, apiKey, modelName);
-            services.AddSingleton(oneShotService);
         }
     }
 }
