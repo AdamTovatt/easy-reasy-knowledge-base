@@ -1,5 +1,9 @@
 # EasyReasy.KnowledgeBase.Storage.Postgres
 
+[← Back to EasyReasy.KnowledgeBase](../README.md)
+
+[![NuGet](https://img.shields.io/badge/nuget-EasyReasy.KnowledgeBase.Storage.Postgres-blue.svg)](https://www.nuget.org/packages/EasyReasy.KnowledgeBase.Storage.Postgres)
+
 PostgreSQL storage provider for EasyReasy KnowledgeBase with persistent data storage using connection factory pattern.
 
 ## Overview
@@ -60,11 +64,11 @@ services.AddSingleton<IKnowledgeStore>(provider =>
 
 ## Database Schema
 
-The implementation creates the following tables:
+The implementation creates the following tables with data integrity constraints:
 
 ### knowledge_files
 - `id` (UUID PRIMARY KEY) - Unique file identifier
-- `name` (VARCHAR(255)) - File name
+- `name` (TEXT) - File name
 - `hash` (BYTEA) - Content hash for change detection
 - `processed_at` (TIMESTAMP WITH TIME ZONE) - Processing timestamp
 - `status` (INTEGER) - Processing status enum value
@@ -75,6 +79,7 @@ The implementation creates the following tables:
 - `section_index` (INTEGER) - Zero-based index within file
 - `summary` (TEXT) - Optional section summary
 - `additional_context` (TEXT) - Optional additional context
+- **UNIQUE CONSTRAINT**: `(file_id, section_index)` - Ensures unique section indexes per file
 
 ### knowledge_chunks
 - `id` (UUID PRIMARY KEY) - Unique chunk identifier
@@ -83,16 +88,68 @@ The implementation creates the following tables:
 - `content` (TEXT) - Chunk content
 - `embedding` (BYTEA) - Optional vector embedding
 - `file_id` (UUID) - Reference to parent file
+- **UNIQUE CONSTRAINT**: `(section_id, chunk_index)` - Ensures unique chunk indexes per section
 
-## Performance Indexes
+## Example Database Schema
 
-The following indexes are automatically created for optimal performance:
+The complete SQL schema used by the PostgreSQL implementation:
 
+```sql
+-- Create knowledge_files table
+CREATE TABLE IF NOT EXISTS knowledge_files (
+    id UUID PRIMARY KEY,
+    name TEXT NOT NULL,
+    hash BYTEA NOT NULL,
+    processed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    status INTEGER NOT NULL
+);
+
+-- Create knowledge_sections table
+CREATE TABLE IF NOT EXISTS knowledge_sections (
+    id UUID PRIMARY KEY,
+    file_id UUID NOT NULL,
+    section_index INTEGER NOT NULL,
+    summary TEXT,
+    additional_context TEXT,
+    UNIQUE (file_id, section_index)
+);
+
+-- Create knowledge_chunks table
+CREATE TABLE IF NOT EXISTS knowledge_chunks (
+    id UUID PRIMARY KEY,
+    section_id UUID NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    embedding BYTEA,
+    file_id UUID NOT NULL,
+    UNIQUE (section_id, chunk_index)
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_chunks_section_id ON knowledge_chunks (section_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_file_id ON knowledge_chunks (file_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_section_index ON knowledge_chunks (section_id, chunk_index);
+CREATE INDEX IF NOT EXISTS idx_sections_file_id ON knowledge_sections (file_id);
+CREATE INDEX IF NOT EXISTS idx_sections_file_index ON knowledge_sections (file_id, section_index);
+```
+
+## Data Integrity & Performance
+
+The implementation includes several features to ensure data integrity and optimal performance:
+
+### Unique Constraints
+- **Section uniqueness**: Each file can only have one section per index
+- **Chunk uniqueness**: Each section can only have one chunk per index
+- **Prevents duplicate data**: Ensures logical consistency in the knowledge base structure
+
+### Performance Indexes
 - `idx_chunks_section_id` - For chunk lookups by section
-- `idx_chunks_file_id` - For chunk lookups by file
-- `idx_chunks_section_index` - For ordered chunk retrieval
+- `idx_chunks_file_id` - For chunk lookups by file  
+- `idx_chunks_section_index` - For ordered chunk retrieval within sections
 - `idx_sections_file_id` - For section lookups by file
-- `idx_sections_file_index` - For ordered section retrieval
+- `idx_sections_file_index` - For ordered section retrieval within files
+
+All indexes and constraints are created automatically during initialization.
 
 ## Connection Management
 
