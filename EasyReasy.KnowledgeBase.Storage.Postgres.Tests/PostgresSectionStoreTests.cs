@@ -65,6 +65,11 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             // Act
             await _sectionStore.AddAsync(section);
 
+            foreach (KnowledgeFileChunk chunk in section.Chunks)
+            {
+                await _chunkStore.AddAsync(chunk);
+            }
+
             // Assert
             KnowledgeFileSection? retrieved = await _sectionStore.GetAsync(section.Id);
             Assert.IsNotNull(retrieved);
@@ -213,6 +218,11 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             // Act
             await _sectionStore.AddAsync(section);
 
+            foreach (KnowledgeFileChunk chunk in section.Chunks)
+            {
+                await _chunkStore.AddAsync(chunk);
+            }
+
             // Assert
             KnowledgeFileSection? retrieved = await _sectionStore.GetAsync(section.Id);
             Assert.IsNotNull(retrieved);
@@ -232,6 +242,11 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 
             // Act
             await _sectionStore.AddAsync(section);
+
+            foreach (KnowledgeFileChunk chunk in section.Chunks)
+            {
+                await _chunkStore.AddAsync(chunk);
+            }
 
             // Assert
             KnowledgeFileSection? retrieved = await _sectionStore.GetAsync(section.Id);
@@ -262,7 +277,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             // Assert
             Assert.IsNotNull(result);
             Assert.AreEqual(section.Chunks.Count, result.Chunks.Count);
-            
+
             // Verify the chunks are loaded correctly
             for (int i = 0; i < section.Chunks.Count; i++)
             {
@@ -293,7 +308,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             // Assert
             Assert.IsNotNull(result);
             Assert.AreEqual(section.Chunks.Count, result.Chunks.Count);
-            
+
             // Verify the chunks are loaded correctly
             for (int i = 0; i < section.Chunks.Count; i++)
             {
@@ -311,7 +326,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 
             KnowledgeFileSection section1 = await CreateValidSectionAsync(file.Id, 0, "Section 1");
             KnowledgeFileSection section2 = await CreateValidSectionAsync(file.Id, 1, "Section 2");
-            
+
             await _sectionStore.AddAsync(section1);
             await _sectionStore.AddAsync(section2);
 
@@ -320,6 +335,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             {
                 await _chunkStore.AddAsync(chunk);
             }
+
             foreach (KnowledgeFileChunk chunk in section2.Chunks)
             {
                 await _chunkStore.AddAsync(chunk);
@@ -334,6 +350,29 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFileSection? retrieved2 = await _sectionStore.GetAsync(section2.Id);
             Assert.IsNull(retrieved1);
             Assert.IsNull(retrieved2);
+        }
+
+        [TestMethod]
+        public async Task AddAsync_ShouldThrowConstraintViolation_WhenDuplicateSectionIndexExists()
+        {
+            // Arrange
+            KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
+            await _fileStore.AddAsync(file);
+
+            // Create and save first section at index 0
+            KnowledgeFileSection section1 = await CreateValidSectionAsync(file.Id, 0, "First section");
+            await _sectionStore.AddAsync(section1);
+            
+            foreach (KnowledgeFileChunk chunk in section1.Chunks)
+            {
+                await _chunkStore.AddAsync(chunk);
+            }
+
+            // Try to create another section at the same index for the same file
+            KnowledgeFileSection duplicateSection = await CreateValidSectionAsync(file.Id, 0, "Duplicate section");
+
+            // Act & Assert - Should throw constraint violation when trying to save section with duplicate index
+            await Assert.ThrowsExceptionAsync<Npgsql.PostgresException>(() => _sectionStore.AddAsync(duplicateSection));
         }
     }
 }

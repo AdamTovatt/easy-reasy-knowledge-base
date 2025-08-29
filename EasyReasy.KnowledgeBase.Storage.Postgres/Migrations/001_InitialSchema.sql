@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS knowledge_sections (
     file_id UUID NOT NULL,
     section_index INTEGER NOT NULL,
     summary TEXT,
-    additional_context TEXT
+    additional_context TEXT,
+    UNIQUE (file_id, section_index)
 );
 
 -- Create knowledge_chunks table
@@ -27,7 +28,8 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
     chunk_index INTEGER NOT NULL,
     content TEXT NOT NULL,
     embedding BYTEA,
-    file_id UUID NOT NULL
+    file_id UUID NOT NULL,
+    UNIQUE (section_id, chunk_index)
 );
 
 -- Create indexes for better performance
