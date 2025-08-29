@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowUp, Pause, AlertTriangle } from 'feather-icons-react';
+import { ArrowUp, Pause, AlertTriangle, MessageSquare, BookOpen, ChevronLeft, ChevronRight, Menu } from 'feather-icons-react';
 import { PuffLoader } from 'react-spinners';
 import ReactMarkdown from 'react-markdown';
 import EasyReasyIcon from './assets/icons/easy-reasy-icon-32.png';
@@ -52,6 +52,11 @@ function Chat() {
     const [chatHistory, setChatHistory] = useState<string[]>([]);
     const [currentResponse, setCurrentResponse] = useState('');
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+        // Check if we're on mobile (screen width <= 768px)
+        return window.innerWidth <= 768;
+    });
+    const [isEasyReasyHovered, setIsEasyReasyHovered] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -76,6 +81,17 @@ function Chat() {
             textarea.style.height = 'auto';
             textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
         }
+    }, []);
+
+    // Handle window resize to adjust sidebar state
+    useEffect(() => {
+        const handleResize = () => {
+            const isMobile = window.innerWidth <= 768;
+            setIsSidebarCollapsed(isMobile);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const updateCurrentResponse = useCallback((newResponse: string) => {
@@ -197,38 +213,77 @@ function Chat() {
         }
     };
 
+    const toggleSidebar = () => {
+        setIsSidebarCollapsed(!isSidebarCollapsed);
+    };
+
     return (
-        <div className="chat-layout">
-            {/* Left Sidebar */}
-            <div className="chat-sidebar">
-                <div className="sidebar-header">
-                    <div className="sidebar-nav">
-                        <div className="nav-item">
-                            <span className="nav-icon">🏠</span>
-                            <span>Home</span>
-                        </div>
-                        <div className="nav-item">
-                            <span className="nav-icon">🔲</span>
-                            <span>Spaces</span>
-                            <span className="preview-tag">Preview</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="sidebar-content">
-                    <div className="today-section">
-                        <h3>Today</h3>
-                        <div className="chat-history-item">
-                            <span>Checking GitHub repositories availab...</span>
-                            <span className="dots">⋯</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="sidebar-footer">
-                    <span>This is a chat demo for EasyReasy.KnowledgeBase</span>
-                </div>
-            </div>
+                 <div className="chat-layout">
+             {/* Mobile Menu Button */}
+             <button 
+                 className={`mobile-menu-button mobile-only ${!isSidebarCollapsed ? 'hidden' : ''}`}
+                 onClick={toggleSidebar}
+             >
+                 <Menu size={24} />
+             </button>
+             
+             {/* Left Sidebar */}
+                                       <div className={`chat-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+                 <div className="sidebar-top">
+                     <button 
+                         className="top-nav-button"
+                         onMouseEnter={() => setIsEasyReasyHovered(true)}
+                         onMouseLeave={() => setIsEasyReasyHovered(false)}
+                         onClick={isSidebarCollapsed ? toggleSidebar : undefined}
+                     >
+                         {isSidebarCollapsed && isEasyReasyHovered ? (
+                             <ChevronRight size={24} />
+                         ) : (
+                             <img src={EasyReasyIcon} alt="EasyReasy Bot" style={{ width: '24px', height: '24px' }} />
+                         )}
+                     </button>
+                     {!isSidebarCollapsed && (
+                         <button className="top-nav-button" onClick={toggleSidebar}>
+                             <ChevronLeft size={24} />
+                         </button>
+                     )}
+                 </div>
+                 
+                 <div className="sidebar-header">
+                     <div className="sidebar-nav">
+                         <div className="nav-item">
+                             <span className="nav-icon">
+                                 <MessageSquare size={18} />
+                             </span>
+                             {!isSidebarCollapsed && <span>New chat</span>}
+                         </div>
+                         <div className="nav-item">
+                             <span className="nav-icon">
+                                 <BookOpen size={18} />
+                             </span>
+                             {!isSidebarCollapsed && <span>Knowledge Base</span>}
+                         </div>
+                     </div>
+                 </div>
+                 
+                {!isSidebarCollapsed && (
+                    <div className="sidebar-content">
+                         <div className="today-section">
+                             <h3>Today</h3>
+                             <div className="chat-history-item">
+                                 <span>Checking GitHub repositories availab...</span>
+                                 <span className="dots">⋯</span>
+                             </div>
+                         </div>
+                     </div>
+                )}
+                 
+                 {!isSidebarCollapsed && (
+                     <div className="sidebar-footer">
+                         <span>This is a chat demo for EasyReasy.KnowledgeBase</span>
+                     </div>
+                 )}
+             </div>
 
             {/* Main Chat Area */}
             <div className="chat-main">
