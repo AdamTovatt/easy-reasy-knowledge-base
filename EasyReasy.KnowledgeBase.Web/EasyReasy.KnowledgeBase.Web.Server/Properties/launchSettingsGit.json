@@ -10,7 +10,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.SpaProxy",
-        "DATABASE_CONNECTION_STRING": "Data Source=knowledgebase.db",
+        "POSTGRES_CONNECTION_STRING": "Host=localhost;Port=5432;Database=test_knowledgebase;Username=postgres;Password=postgres",
         "VECTOR_STORE_SAVE_PATH": "vector_store.json",
         "OLLAMA_SERVER_URL_1": "your-ollama-url-here",
         "OLLAMA_SERVER_API_KEY_1": "your-ollama-api-key-here",

@@ -9,10 +9,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
     public static class EnvironmentVariable
     {
         /// <summary>
-        /// Database connection string for the knowledge base.
+        /// Postgres database connection string for the knowledge base.
         /// </summary>
         [EnvironmentVariableName(minLength: 5)]
-        public static readonly VariableName DatabaseConnectionString = new VariableName("DATABASE_CONNECTION_STRING");
+        public static readonly VariableName PostgresConnectionString = new VariableName("POSTGRES_CONNECTION_STRING");
 
         /// <summary>
         /// Path where vector store data will be saved.
