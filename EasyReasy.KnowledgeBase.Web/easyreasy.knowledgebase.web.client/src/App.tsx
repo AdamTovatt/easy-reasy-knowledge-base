@@ -1,29 +1,52 @@
-import { useState } from 'react';
-import './App.css';
+import { useState, useEffect } from 'react';
 import Chat from './Chat';
+import Login from './Login';
+import { authUtils } from './utils/auth';
+import './App.css';
 
 function App() {
-    const [currentPage, setCurrentPage] = useState<'home' | 'chat'>('home');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    if (currentPage === 'chat') {
+    useEffect(() => {
+        // Check if user is authenticated on app load
+        const checkAuth = () => {
+            const isValid = authUtils.isTokenValid();
+            setIsAuthenticated(isValid);
+            setIsLoading(false);
+        };
+
+        checkAuth();
+    }, []);
+
+    const handleLogin = (token: string, expiresAt: string) => {
+        authUtils.saveToken(token, expiresAt);
+        setIsAuthenticated(true);
+    };
+
+    const handleLogout = () => {
+        authUtils.clearToken();
+        setIsAuthenticated(false);
+    };
+
+    if (isLoading) {
         return (
             <div className="app">
-                <Chat />
+                <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                    <p>Loading...</p>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="app">
-            <div className="landing-page">
-                <h1>EasyReasy Knowledge Base</h1>
-                <button 
-                    className="chat-nav-button"
-                    onClick={() => setCurrentPage('chat')}
-                >
-                    Chat
-                </button>
-            </div>
+            {isAuthenticated ? (
+                <Chat onLogout={handleLogout} />
+            ) : (
+                <Login onLogin={handleLogin} />
+            )}
         </div>
     );
 }

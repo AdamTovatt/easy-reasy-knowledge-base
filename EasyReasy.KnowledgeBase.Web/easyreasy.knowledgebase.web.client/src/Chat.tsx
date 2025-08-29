@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowUp, Pause, AlertTriangle, MessageSquare, BookOpen, ChevronLeft, ChevronRight, Menu } from 'feather-icons-react';
+import { ArrowUp, Pause, AlertTriangle, MessageSquare, BookOpen, ChevronLeft, ChevronRight, Menu, LogOut } from 'feather-icons-react';
 import { PuffLoader } from 'react-spinners';
 import ReactMarkdown from 'react-markdown';
 import EasyReasyIcon from './assets/icons/easy-reasy-icon-32.png';
+import { authUtils } from './utils/auth';
 
 const ErrorIcon = () => (
     <div style={{ 
@@ -46,7 +47,7 @@ interface StreamChatResponse {
     error?: string;
 }
 
-function Chat() {
+function Chat({ onLogout }: { onLogout: () => void }) {
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [chatHistory, setChatHistory] = useState<string[]>([]);
@@ -117,17 +118,26 @@ function Chat() {
         abortControllerRef.current = new AbortController();
 
         try {
+            const authHeader = authUtils.getAuthHeader();
             const response = await fetch('/api/chat/stream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    ...authHeader,
                 },
                 body: JSON.stringify({ message: userMessage }),
                 signal: abortControllerRef.current.signal,
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                if (response.status === 401) {
+                    // Token expired or invalid
+                    authUtils.clearToken();
+                    onLogout();
+                    throw new Error('Session expired. Please log in again.');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
             }
 
             const reader = response.body?.getReader();
@@ -217,6 +227,11 @@ function Chat() {
         setIsSidebarCollapsed(!isSidebarCollapsed);
     };
 
+    const handleLogout = () => {
+        authUtils.clearToken();
+        onLogout();
+    };
+
     return (
                  <div className="chat-layout">
              {/* Mobile Menu Button */}
@@ -287,6 +302,13 @@ function Chat() {
 
             {/* Main Chat Area */}
             <div className="chat-main">
+                <div className="chat-header">
+                    <div className="header-actions">
+                        <button className="header-icon" onClick={handleLogout} title="Logout">
+                            <LogOut size={18} />
+                        </button>
+                    </div>
+                </div>
                 
                 <div className="chat-messages" ref={chatContainerRef} onScroll={handleScroll}>
                     <div className="messages-container">

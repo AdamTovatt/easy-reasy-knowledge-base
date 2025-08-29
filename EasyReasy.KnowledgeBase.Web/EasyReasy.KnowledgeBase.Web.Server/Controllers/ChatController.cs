@@ -2,12 +2,15 @@ using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.Ollama.Client;
 using EasyReasy.Ollama.Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using EasyReasy.Auth;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ChatController : ControllerBase
     {
         private readonly OllamaClient _ollamaClient;
@@ -24,6 +27,14 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
             {
                 return BadRequest("Message cannot be empty");
             }
+
+            // Access user information from the JWT token
+            string? userId = HttpContext.GetUserId();
+            string? tenantId = HttpContext.GetTenantId();
+            IEnumerable<string> roles = HttpContext.GetRoles();
+
+            // Log user information (you can remove this in production)
+            Console.WriteLine($"User {userId} from tenant {tenantId} with roles: {string.Join(", ", roles)}");
 
             string modelName = EnvironmentVariables.OllamaSmallTextCompletionModelName.GetValue();
 
