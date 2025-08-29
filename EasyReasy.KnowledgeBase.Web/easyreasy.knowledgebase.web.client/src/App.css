@@ -581,6 +581,7 @@ html {
     background-color: var(--elevation-level-2-dark);
     border: 1px solid var(--color-border);
     color: var(--color-fg);
+    text-align: left;
 }
 
 .ai-icon {
