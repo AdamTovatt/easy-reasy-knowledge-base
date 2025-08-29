@@ -123,10 +123,14 @@ function Chat() {
             console.error('Error:', error);
             console.log('Error type:', typeof error);
             console.log('Error message:', error instanceof Error ? error.message : 'Unknown error');
+            console.log('Error name:', error instanceof Error ? error.name : 'Unknown');
             
             // Don't add error messages for aborted requests since we handle them in handleCancelStream
             if (!(error instanceof Error && error.name === 'AbortError')) {
+                console.log('Adding error message to chat history');
                 setChatHistory(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+            } else {
+                console.log('AbortError detected, not adding error message');
             }
         } finally {
             setIsStreaming(false);
@@ -143,6 +147,9 @@ function Chat() {
             if (currentResponse.trim()) {
                 setChatHistory(prev => [...prev, `AI: ${currentResponse}`]);
             }
+            
+            // Add interruption message
+            setChatHistory(prev => [...prev, `Error: Request was interrupted`]);
             
             setCurrentResponse('');
             abortControllerRef.current = null;
@@ -178,19 +185,12 @@ function Chat() {
                 </div>
                 
                 <div className="sidebar-footer">
-                    <a href="#" className="upgrade-link">Upgrade to Pro</a>
-                    <span>to access higher limits and premium models.</span>
+                    <span>This is a chat demo for EasyReasy.KnowledgeBase</span>
                 </div>
             </div>
 
             {/* Main Chat Area */}
             <div className="chat-main">
-                <div className="chat-header">
-                    <div className="header-actions">
-                        <button className="header-icon">⋯</button>
-                        <button className="header-icon">⬈</button>
-                    </div>
-                </div>
                 
                 <div className="chat-messages" ref={chatContainerRef}>
                     <div className="messages-container">

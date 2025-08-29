@@ -388,6 +388,7 @@ html {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    padding-bottom: 3rem;
 }
 
 .message {
@@ -441,12 +442,24 @@ html {
 }
 
 .chat-input-container {
-    padding: 20px;
+    padding: 0 20px 20px 20px;
     border-top: none;
     background: transparent;
     position: relative;
     display: flex;
     justify-content: center;
+}
+
+.chat-input-container::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--elevation-level-1-dark));
+    pointer-events: none;
+    z-index: 1;
 }
 
 .scroll-down-btn {
