@@ -822,21 +822,34 @@ html {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    height: 100vh;
     background: var(--color-bg);
     color: var(--color-fg);
-    padding: 20px;
+    padding: 0;
     gap: 32px;
+    overflow: hidden;
 }
 
 .login-logo {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .login-logo img {
     width: 128px;
     height: 128px;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-logo.logo-merge img {
+    transform: scale(1.2);
 }
 
 .login-container {
@@ -847,6 +860,16 @@ html {
     width: 100%;
     max-width: 400px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center top;
+    z-index: 1;
+    position: relative;
+}
+
+.login-container.login-collapse {
+    transform: scale(0.1) translateY(-600px);
+    opacity: 0;
+    pointer-events: none;
 }
 
 .login-header {
@@ -891,6 +914,10 @@ html {
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--color-fg);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .form-group input {
@@ -1001,6 +1028,8 @@ html {
     .login-container {
         padding: 24px;
         margin: 16px;
+        max-width: 280px;
+        width: calc(100% - 32px);
     }
     
     .login-logo h1 {

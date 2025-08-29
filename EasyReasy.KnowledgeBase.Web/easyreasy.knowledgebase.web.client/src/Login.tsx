@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { LogIn, Eye, EyeOff, AlertTriangle } from 'feather-icons-react';
-import { PuffLoader } from 'react-spinners';
-import EasyReasyIcon from './assets/icons/easy-reasy-icon-128.png';
+import EasyReasyIcon from './assets/icons/easy-reasy-icon-256.png';
 
 interface LoginResponse {
     token: string;
@@ -14,6 +13,7 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isAnimating, setIsAnimating] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,6 +22,8 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
             return;
         }
 
+        // Start the collapse animation immediately
+        setIsAnimating(true);
         setIsLoading(true);
         setError('');
 
@@ -43,21 +45,27 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
             }
 
             const data: LoginResponse = await response.json();
-            onLogin(data.token, data.expiresAt);
+            
+            // Wait for animation to complete before calling onLogin
+            setTimeout(() => {
+                onLogin(data.token, data.expiresAt);
+            }, 600); // Match the animation duration
+            
         } catch (error) {
             console.error('Login error:', error);
             setError(error instanceof Error ? error.message : 'Login failed');
-        } finally {
             setIsLoading(false);
+            // Reset animation if there's an error
+            setIsAnimating(false);
         }
     };
 
     return (
         <div className="login-page">
-            <div className="login-logo">
-                <img src={EasyReasyIcon} alt="EasyReasy" />
+            <div className={`login-logo ${isAnimating ? 'logo-merge' : ''}`}>
+                <img src={EasyReasyIcon} alt="EasyReasy" draggable="false" />
             </div>
-            <div className="login-container">
+            <div className={`login-container ${isAnimating ? 'login-collapse' : ''}`}>
                 <form onSubmit={handleSubmit} className="login-form">
                     {error && (
                         <div className="login-error">
@@ -76,6 +84,7 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
                             placeholder="Enter your username"
                             disabled={isLoading}
                             required
+                            autoComplete="off"
                         />
                     </div>
 
@@ -90,6 +99,7 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
                                 placeholder="Enter your password"
                                 disabled={isLoading}
                                 required
+                                autoComplete="off"
                             />
                             <button
                                 type="button"
