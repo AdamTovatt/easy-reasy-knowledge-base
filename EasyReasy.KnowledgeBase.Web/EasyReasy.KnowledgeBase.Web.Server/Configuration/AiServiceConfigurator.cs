@@ -4,7 +4,7 @@ using EasyReasy.KnowledgeBase.OllamaGeneration;
 using EasyReasy.KnowledgeBase.Web.Server.Services;
 using EasyReasy.Ollama.Client;
 
-namespace EasyReasy.KnowledgeBase.Web.Server
+namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
 {
     /// <summary>
     /// Configures AI services for the application, including embedding and one-shot services.
@@ -17,9 +17,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server
         /// <param name="services">The service collection to configure.</param>
         public static async Task ConfigureEmbeddingServiceAsync(IServiceCollection services)
         {
-            string baseUrl = EnvironmentVariables.OllamaServerUrls.GetAllValues().First();
-            string apiKey = EnvironmentVariables.OllamaServerApiKeys.GetAllValues().First();
-            string modelName = EnvironmentVariables.OllamaEmbeddingModelName.GetValue();
+            string baseUrl = EnvironmentVariable.OllamaServerUrls.GetAllValues().First();
+            string apiKey = EnvironmentVariable.OllamaServerApiKeys.GetAllValues().First();
+            string modelName = EnvironmentVariable.OllamaEmbeddingModelName.GetValue();
 
             IEmbeddingService embeddingService = await EasyReasyOllamaEmbeddingService.CreateAsync(baseUrl, apiKey, modelName);
             services.AddSingleton(embeddingService);
@@ -31,12 +31,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server
         /// <param name="services">The service collection to configure.</param>
         public static async Task ConfigureOneShotServicesAsync(IServiceCollection services)
         {
-            string baseUrl = EnvironmentVariables.OllamaServerUrls.GetAllValues().First();
-            string apiKey = EnvironmentVariables.OllamaServerApiKeys.GetAllValues().First();
+            string baseUrl = EnvironmentVariable.OllamaServerUrls.GetAllValues().First();
+            string apiKey = EnvironmentVariable.OllamaServerApiKeys.GetAllValues().First();
 
-            string smallModelName = EnvironmentVariables.OllamaSmallTextCompletionModelName.GetValue();
-            string largeModelName = EnvironmentVariables.OllamaLargeTextCompletionModelName.GetValue();
-            string reasoningModelName = EnvironmentVariables.OllamaReasoningTextCompletionModelName.GetValue();
+            string smallModelName = EnvironmentVariable.OllamaSmallTextCompletionModelName.GetValue();
+            string largeModelName = EnvironmentVariable.OllamaLargeTextCompletionModelName.GetValue();
+            string reasoningModelName = EnvironmentVariable.OllamaReasoningTextCompletionModelName.GetValue();
 
             IOneShotService smallOneShotService = await EasyReasyOllamaOneShotService.CreateAsync(baseUrl, apiKey, smallModelName);
             IOneShotService largeOneShotService = await EasyReasyOllamaOneShotService.CreateAsync(baseUrl, apiKey, largeModelName);
@@ -55,8 +55,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server
         /// <param name="services">The service collection to configure.</param>
         public static async Task ConfigureChatClientsAsync(IServiceCollection services)
         {
-            string baseUrl = EnvironmentVariables.OllamaServerUrls.GetAllValues().First();
-            string apiKey = EnvironmentVariables.OllamaServerApiKeys.GetAllValues().First();
+            string baseUrl = EnvironmentVariable.OllamaServerUrls.GetAllValues().First();
+            string apiKey = EnvironmentVariable.OllamaServerApiKeys.GetAllValues().First();
 
             // Create a single authenticated client - the model is specified in each chat request
             OllamaClient ollamaClient = await OllamaClient.CreateAuthorizedAsync(new HttpClient { BaseAddress = new Uri(baseUrl) }, apiKey);

@@ -1,12 +1,12 @@
 using EasyReasy.EnvironmentVariables;
 
-namespace EasyReasy.KnowledgeBase.Web.Server
+namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
 {
     /// <summary>
     /// Environment variable configuration for the Knowledge Base Web Server.
     /// </summary>
     [EnvironmentVariableNameContainer]
-    public static class EnvironmentVariables
+    public static class EnvironmentVariable
     {
         /// <summary>
         /// Database connection string for the knowledge base.

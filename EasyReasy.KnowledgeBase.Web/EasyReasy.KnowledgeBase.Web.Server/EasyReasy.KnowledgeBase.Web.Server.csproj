@@ -20,6 +20,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="dbup-postgresql" Version="5.0.37" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +32,10 @@
     <ProjectReference Include="..\easyreasy.knowledgebase.web.client\easyreasy.knowledgebase.web.client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\*.sql" />
   </ItemGroup>
 
 </Project>

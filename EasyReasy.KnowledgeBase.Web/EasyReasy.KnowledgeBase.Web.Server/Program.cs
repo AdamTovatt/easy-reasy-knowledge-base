@@ -10,7 +10,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server
     {
         public static async Task Main(string[] args)
         {
-            EnvironmentVariableHelper.ValidateVariableNamesIn(typeof(EnvironmentVariables));
+            EnvironmentVariableHelper.ValidateVariableNamesIn(typeof(EnvironmentVariable));
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +22,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server
             });
 
             // Configure EasyReasy.Auth
-            string jwtSecret = EnvironmentVariables.JwtSigningSecret.GetValue();
+            string jwtSecret = EnvironmentVariable.JwtSigningSecret.GetValue();
             builder.Services.AddEasyReasyAuth(jwtSecret, issuer: "easyreasy-knowledgebase");
 
             // Register password hasher
@@ -40,6 +40,19 @@ namespace EasyReasy.KnowledgeBase.Web.Server
             builder.Services.AddSwaggerGen();
 
             WebApplication app = builder.Build();
+
+            // Run database migrations
+            string postgresConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING") ?? 
+                "Host=localhost;Database=knowledgebasedb;Username=postgres;Password=password";
+            
+            ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();
+            bool migrationSuccess = DatabaseMigration.RunMigrations(postgresConnectionString, logger);
+            
+            if (!migrationSuccess)
+            {
+                logger.LogError("Database migration failed. Application will exit.");
+                return;
+            }
 
             app.UseDefaultFiles();
             app.UseStaticFiles();

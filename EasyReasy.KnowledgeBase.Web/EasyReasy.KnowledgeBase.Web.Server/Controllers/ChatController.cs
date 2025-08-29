@@ -1,4 +1,5 @@
 using EasyReasy.EnvironmentVariables;
+using EasyReasy.KnowledgeBase.Web.Server.Configuration;
 using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.Ollama.Client;
 using EasyReasy.Ollama.Common;
@@ -36,7 +37,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
             // Log user information (you can remove this in production)
             Console.WriteLine($"User {userId} from tenant {tenantId} with roles: {string.Join(", ", roles)}");
 
-            string modelName = EnvironmentVariables.OllamaSmallTextCompletionModelName.GetValue();
+            string modelName = EnvironmentVariable.OllamaSmallTextCompletionModelName.GetValue();
 
             Response.Headers.ContentType = "text/event-stream";
             Response.Headers.CacheControl = "no-cache";
