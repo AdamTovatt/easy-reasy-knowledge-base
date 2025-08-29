@@ -63,6 +63,7 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
     return (
         <div className="login-page">
             <div className={`login-logo ${isAnimating ? 'logo-merge' : ''}`}>
+                <div className={`animated-border ${isAnimating ? 'border-visible' : ''}`}></div>
                 <img src={EasyReasyIcon} alt="EasyReasy" draggable="false" />
             </div>
             <div className={`login-container ${isAnimating ? 'login-collapse' : ''}`}>
