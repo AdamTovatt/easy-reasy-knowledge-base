@@ -1,93 +1,34 @@
 using EasyReasy.KnowledgeBase.Models;
 using EasyReasy.KnowledgeBase.Storage.Postgres;
-using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Data;
 
 namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 {
     [TestClass]
-    public sealed class PostgresChunkStoreTests
+    public sealed class PostgresChunkStoreTests : PostgresTestBase<PostgresChunkStoreTests>
     {
-        private static string _connectionString = string.Empty;
-        private static PostgresChunkStore _chunkStore = null!;
-        private static PostgresFileStore _fileStore = null!;
-        private static PostgresSectionStore _sectionStore = null!;
-        private static IDbConnectionFactory _connectionFactory = null!;
-        private static ILogger _logger = null!;
-
         [ClassInitialize]
         public static void BeforeAll(TestContext testContext)
         {
-            try
-            {
-                // Use a test database connection string
-                _connectionString = TestDatabaseHelper.GetConnectionString();
-                _connectionFactory = new PostgresConnectionFactory(_connectionString);
-                _fileStore = new PostgresFileStore(_connectionFactory);
-                _chunkStore = new PostgresChunkStore(_connectionFactory);
-                _sectionStore = new PostgresSectionStore(_connectionFactory, _chunkStore);
-                
-                // Create a simple logger for test output
-                _logger = TestDatabaseHelper.CreateLogger<PostgresChunkStoreTests>();
-                
-                // Ensure database is clean and migrated
-                TestDatabaseHelper.SetupDatabase<PostgresChunkStoreTests>();
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine($"Failed to initialize PostgreSQL test environment: {exception.Message}");
-                Assert.Inconclusive("Failed to initialize PostgreSQL test environment for integration tests.");
-            }
+            InitializeTestEnvironment();
         }
 
         [ClassCleanup]
         public static void AfterAll()
         {
-            _chunkStore = null!;
-            _sectionStore = null!;
-            _fileStore = null!;
-            _connectionFactory = null!;
-            _logger = null!;
-            
-            // Clean up the test database
-            TestDatabaseHelper.CleanupDatabase<PostgresChunkStoreTests>();
+            CleanupTestEnvironment();
         }
 
         [TestInitialize]
         public void TestInitialize()
         {
-            // Ensure database is clean for each test
-            TestDatabaseHelper.SetupDatabase<PostgresChunkStoreTests>();
+            SetupDatabaseForTest();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            // Clean up after each test
-            TestDatabaseHelper.CleanupDatabase<PostgresChunkStoreTests>();
-        }
-
-        /// <summary>
-        /// Helper method to create a valid section with chunks for testing.
-        /// </summary>
-        private async Task<KnowledgeFileSection> CreateValidSectionAsync(Guid fileId, int sectionIndex, string summary = "Test section")
-        {
-            await Task.CompletedTask;
-
-            Guid sectionId = Guid.NewGuid();
-            KnowledgeFileChunk chunk = new KnowledgeFileChunk(
-                Guid.NewGuid(),
-                sectionId,
-                0,
-                $"Test chunk content for section {sectionIndex}",
-                new float[] { 0.1f, 0.2f, 0.3f }
-            );
-
-            List<KnowledgeFileChunk> chunks = new List<KnowledgeFileChunk> { chunk };
-
-            // Create section using the CreateFromChunks method
-            return KnowledgeFileSection.CreateFromChunks(chunks, fileId, sectionIndex);
+            CleanupDatabaseAfterTest();
         }
 
         [TestMethod]
@@ -112,13 +53,12 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
             await _fileStore.AddAsync(file);
 
-            Guid sectionId = Guid.NewGuid();
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
-            await _sectionStore.AddAsync(section);
+            await SaveSectionWithChunksAsync(section);
 
             KnowledgeFileChunk chunk = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 0,
                 "Test chunk content",
                 new float[] { 0.1f, 0.2f, 0.3f }
@@ -151,13 +91,12 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
             await _fileStore.AddAsync(file);
 
-            Guid sectionId = Guid.NewGuid();
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
-            await _sectionStore.AddAsync(section);
+            await SaveSectionWithChunksAsync(section);
 
             KnowledgeFileChunk chunk = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 0,
                 "Test chunk content",
                 new float[] { 0.1f, 0.2f, 0.3f }
@@ -196,20 +135,19 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
             await _fileStore.AddAsync(file);
 
-            Guid sectionId = Guid.NewGuid();
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
-            await _sectionStore.AddAsync(section);
+            await SaveSectionWithChunksAsync(section);
 
             KnowledgeFileChunk chunk1 = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 0,
                 "Test chunk content 1",
                 new float[] { 0.1f, 0.2f, 0.3f }
             );
             KnowledgeFileChunk chunk2 = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 1,
                 "Test chunk content 2",
                 new float[] { 0.4f, 0.5f, 0.6f }
@@ -258,13 +196,12 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
             await _fileStore.AddAsync(file);
 
-            Guid sectionId = Guid.NewGuid();
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
-            await _sectionStore.AddAsync(section);
+            await SaveSectionWithChunksAsync(section);
 
             KnowledgeFileChunk chunk = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 0,
                 "Test chunk content",
                 new float[] { 0.1f, 0.2f, 0.3f }
@@ -272,12 +209,12 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             await _chunkStore.AddAsync(chunk);
 
             // Act
-            KnowledgeFileChunk? result = await _chunkStore.GetByIndexAsync(sectionId, 0);
+            KnowledgeFileChunk? result = await _chunkStore.GetByIndexAsync(section.Id, 0);
 
             // Assert
             Assert.IsNotNull(result);
             Assert.AreEqual(chunk.Id, result.Id);
-            Assert.AreEqual(sectionId, result.SectionId);
+            Assert.AreEqual(section.Id, result.SectionId);
             Assert.AreEqual(0, result.ChunkIndex);
         }
 
@@ -301,20 +238,19 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
             await _fileStore.AddAsync(file);
 
-            Guid sectionId = Guid.NewGuid();
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
-            await _sectionStore.AddAsync(section);
+            await SaveSectionWithChunksAsync(section);
 
             KnowledgeFileChunk chunk1 = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 0,
                 "Test chunk content 1",
                 new float[] { 0.1f, 0.2f, 0.3f }
             );
             KnowledgeFileChunk chunk2 = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 1,
                 "Test chunk content 2",
                 new float[] { 0.4f, 0.5f, 0.6f }
@@ -324,7 +260,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             await _chunkStore.AddAsync(chunk2);
 
             // Act
-            IEnumerable<KnowledgeFileChunk> result = await _chunkStore.GetBySectionAsync(sectionId);
+            IEnumerable<KnowledgeFileChunk> result = await _chunkStore.GetBySectionAsync(section.Id);
 
             // Assert
             Assert.IsNotNull(result);
@@ -355,13 +291,12 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
             await _fileStore.AddAsync(file);
 
-            Guid sectionId = Guid.NewGuid();
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
-            await _sectionStore.AddAsync(section);
+            await SaveSectionWithChunksAsync(section);
 
             KnowledgeFileChunk chunk = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 0,
                 "Test chunk content",
                 new float[] { 0.1f, 0.2f, 0.3f }
@@ -397,13 +332,12 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
             await _fileStore.AddAsync(file);
 
-            Guid sectionId = Guid.NewGuid();
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
-            await _sectionStore.AddAsync(section);
+            await SaveSectionWithChunksAsync(section);
 
             KnowledgeFileChunk chunk = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 0,
                 "Test chunk content without embedding"
             );
@@ -426,26 +360,25 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             KnowledgeFile file = new KnowledgeFile(Guid.NewGuid(), "test.txt", new byte[] { 1, 2, 3, 4 });
             await _fileStore.AddAsync(file);
 
-            Guid sectionId = Guid.NewGuid();
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
-            await _sectionStore.AddAsync(section);
+            await SaveSectionWithChunksAsync(section);
 
             // Add chunks in reverse order
             KnowledgeFileChunk chunk2 = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 2,
                 "Test chunk content 2"
             );
             KnowledgeFileChunk chunk0 = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 0,
                 "Test chunk content 0"
             );
             KnowledgeFileChunk chunk1 = new KnowledgeFileChunk(
                 Guid.NewGuid(),
-                sectionId,
+                section.Id,
                 1,
                 "Test chunk content 1"
             );
@@ -455,7 +388,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             await _chunkStore.AddAsync(chunk1);
 
             // Act
-            IEnumerable<KnowledgeFileChunk> result = await _chunkStore.GetBySectionAsync(sectionId);
+            IEnumerable<KnowledgeFileChunk> result = await _chunkStore.GetBySectionAsync(section.Id);
 
             // Assert
             Assert.IsNotNull(result);

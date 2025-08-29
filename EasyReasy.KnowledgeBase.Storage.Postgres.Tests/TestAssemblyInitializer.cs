@@ -13,19 +13,11 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
         [AssemblyInitialize]
         public static void AssemblyInitialize(TestContext testContext)
         {
-            try
-            {
-                // Load environment variables from test configuration file
-                EnvironmentVariableHelper.LoadVariablesFromFile("..\\..\\TestEnvironmentVariables.txt");
-                EnvironmentVariableHelper.ValidateVariableNamesIn(typeof(PostgresTestEnvironmentVariables));
-                
-                Console.WriteLine("PostgreSQL test environment variables loaded successfully.");
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine($"Could not load TestEnvironmentVariables.txt: {exception.Message}");
-                throw new InvalidOperationException("Integration tests require TestEnvironmentVariables.txt configuration file.", exception);
-            }
+            // Load environment variables from test configuration file
+            EnvironmentVariableHelper.LoadVariablesFromFile("..\\..\\TestEnvironmentVariables.txt");
+            EnvironmentVariableHelper.ValidateVariableNamesIn(typeof(PostgresTestEnvironmentVariables));
+            
+            Console.WriteLine("PostgreSQL test environment variables loaded successfully.");
         }
     }
 }

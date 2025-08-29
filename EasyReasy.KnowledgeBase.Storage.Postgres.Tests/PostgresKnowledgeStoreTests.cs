@@ -1,90 +1,34 @@
 using EasyReasy.KnowledgeBase.Models;
 using EasyReasy.KnowledgeBase.Storage.Postgres;
-using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Data;
 
 namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 {
     [TestClass]
-    public sealed class PostgresKnowledgeStoreTests
+    public sealed class PostgresKnowledgeStoreTests : PostgresTestBase<PostgresKnowledgeStoreTests>
     {
-        private static string _connectionString = string.Empty;
-        private static PostgresKnowledgeStore _knowledgeStore = null!;
-        private static IDbConnectionFactory _connectionFactory = null!;
-        private static ILogger _logger = null!;
-
         [ClassInitialize]
         public static void BeforeAll(TestContext testContext)
         {
-            try
-            {
-                // Use a test database connection string
-                _connectionString = TestDatabaseHelper.GetConnectionString();
-                _connectionFactory = new PostgresConnectionFactory(_connectionString);
-                _knowledgeStore = new PostgresKnowledgeStore(_connectionFactory);
-                
-                // Create a simple logger for test output
-                _logger = TestDatabaseHelper.CreateLogger<PostgresKnowledgeStoreTests>();
-                
-                // Ensure database is clean and migrated
-                TestDatabaseHelper.SetupDatabase<PostgresKnowledgeStoreTests>();
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine($"Failed to initialize PostgreSQL test environment: {exception.Message}");
-                Assert.Inconclusive("Failed to initialize PostgreSQL test environment for integration tests.");
-            }
+            InitializeTestEnvironment();
         }
 
         [ClassCleanup]
         public static void AfterAll()
         {
-            _knowledgeStore = null!;
-            _connectionFactory = null!;
-            _logger = null!;
-            
-            // Clean up the test database
-            TestDatabaseHelper.CleanupDatabase<PostgresKnowledgeStoreTests>();
+            CleanupTestEnvironment();
         }
 
         [TestInitialize]
         public void TestInitialize()
         {
-            // Ensure database is clean for each test
-            TestDatabaseHelper.SetupDatabase<PostgresKnowledgeStoreTests>();
+            SetupDatabaseForTest();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            // Clean up after each test
-            TestDatabaseHelper.CleanupDatabase<PostgresKnowledgeStoreTests>();
-        }
-
-        /// <summary>
-        /// Helper method to create a valid section with chunks for testing.
-        /// </summary>
-        private async Task<KnowledgeFileSection> CreateValidSectionAsync(Guid fileId, int sectionIndex, string summary = "Test section")
-        {
-            await Task.CompletedTask;
-
-            Guid sectionId = Guid.NewGuid();
-            KnowledgeFileChunk chunk = new KnowledgeFileChunk(
-                Guid.NewGuid(),
-                sectionId,
-                0,
-                $"Test chunk content for section {sectionIndex}",
-                new float[] { 0.1f, 0.2f, 0.3f }
-            );
-
-            List<KnowledgeFileChunk> chunks = new List<KnowledgeFileChunk> { chunk };
-
-            // Create section using the CreateFromChunks method
-            KnowledgeFileSection result = KnowledgeFileSection.CreateFromChunks(chunks, fileId, sectionIndex);
-            result.Summary = summary;
-
-            return result;
+            CleanupDatabaseAfterTest();
         }
 
         [TestMethod]

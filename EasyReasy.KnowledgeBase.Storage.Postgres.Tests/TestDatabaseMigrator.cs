@@ -32,9 +32,9 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             {
                 UpgradeEngine upgrader = DeployChanges.To
                     .PostgresqlDatabase(connectionString)
-                    .WithScriptsEmbeddedInAssembly(typeof(TestDatabaseMigrator).Assembly)
+                    .WithScriptsEmbeddedInAssembly(typeof(EasyReasy.KnowledgeBase.Storage.Postgres.PostgresFileStore).Assembly)
                     .LogTo(new TestDbUpLogger(logger))
-                    .WithTransaction()
+                    .WithoutTransaction()
                     .Build();
 
                 DatabaseUpgradeResult result = upgrader.PerformUpgrade();
@@ -42,6 +42,20 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
                 if (result.Successful)
                 {
                     logger.LogInformation("Test database migrations completed successfully");
+
+                    // Verify tables were actually created
+                    using NpgsqlConnection connection = new NpgsqlConnection(connectionString);
+                    connection.Open();
+                    using NpgsqlCommand command = new NpgsqlCommand("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'knowledge_%'", connection);
+                    using NpgsqlDataReader reader = command.ExecuteReader();
+                    List<string> tables = new List<string>();
+                    while (reader.Read())
+                    {
+                        tables.Add(reader.GetString(0));
+                    }
+
+                    logger.LogInformation("Tables found after migration: {Tables}", string.Join(", ", tables));
+
                     return true;
                 }
                 else
@@ -65,16 +79,32 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             {
                 using NpgsqlConnection connection = new NpgsqlConnection(connectionString);
                 connection.Open();
-                
-                // Drop all tables to ensure clean state
-                using NpgsqlCommand command = new NpgsqlCommand(@"
-                    DROP TABLE IF EXISTS knowledge_chunks CASCADE;
-                    DROP TABLE IF EXISTS knowledge_sections CASCADE;
-                    DROP TABLE IF EXISTS knowledge_files CASCADE;", connection);
-                
-                command.ExecuteNonQuery();
-                
-                logger.LogInformation("Test database cleanup completed successfully");
+
+                // Check if tables exist before trying to delete from them
+                using NpgsqlCommand checkCommand = new NpgsqlCommand(@"
+                    SELECT COUNT(*) FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name IN ('knowledge_chunks', 'knowledge_sections', 'knowledge_files')", connection);
+
+                int tableCount = Convert.ToInt32(checkCommand.ExecuteScalar());
+
+                if (tableCount > 0)
+                {
+                    // Delete all data but keep the schema
+                    // Delete in order to respect foreign key constraints
+                    using NpgsqlCommand command = new NpgsqlCommand(@"
+                        DELETE FROM knowledge_chunks;
+                        DELETE FROM knowledge_sections;
+                        DELETE FROM knowledge_files;", connection);
+
+                    int rowsAffected = command.ExecuteNonQuery();
+                    logger.LogInformation("Test database cleanup completed successfully. Rows affected: {RowsAffected}", rowsAffected);
+                }
+                else
+                {
+                    logger.LogInformation("No tables exist to cleanup");
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -107,34 +137,34 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
                 _logger = logger;
             }
 
-            public void WriteInformation(string message)
+            public void LogTrace(string message, params object[] args)
             {
-                _logger.LogInformation(message);
+                _logger.LogTrace(message, args);
             }
 
-            public void WriteInformation(string message, params object[] args)
+            public void LogDebug(string message, params object[] args)
+            {
+                _logger.LogDebug(message, args);
+            }
+
+            public void LogInformation(string message, params object[] args)
             {
                 _logger.LogInformation(message, args);
             }
 
-            public void WriteError(string message)
+            public void LogWarning(string message, params object[] args)
             {
-                _logger.LogError(message);
+                _logger.LogWarning(message, args);
             }
 
-            public void WriteError(string message, params object[] args)
+            public void LogError(string message, params object[] args)
             {
                 _logger.LogError(message, args);
             }
 
-            public void WriteWarning(string message)
+            public void LogError(Exception exception, string message, params object[] args)
             {
-                _logger.LogWarning(message);
-            }
-
-            public void WriteWarning(string message, params object[] args)
-            {
-                _logger.LogWarning(message, args);
+                _logger.LogError(exception, message, args);
             }
         }
     }

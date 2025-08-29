@@ -5,7 +5,7 @@
 -- Create knowledge_files table
 CREATE TABLE IF NOT EXISTS knowledge_files (
     id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
     hash BYTEA NOT NULL,
     processed_at TIMESTAMP WITH TIME ZONE NOT NULL,
     status INTEGER NOT NULL

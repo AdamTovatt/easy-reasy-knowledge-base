@@ -1,66 +1,34 @@
 using EasyReasy.KnowledgeBase.Models;
 using EasyReasy.KnowledgeBase.Storage.Postgres;
-using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Npgsql;
-using System.Data;
 
 namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 {
     [TestClass]
-    public sealed class PostgresFileStoreTests
+    public sealed class PostgresFileStoreTests : PostgresTestBase<PostgresFileStoreTests>
     {
-        private static string _connectionString = string.Empty;
-        private static PostgresFileStore _fileStore = null!;
-        private static IDbConnectionFactory _connectionFactory = null!;
-        private static ILogger _logger = null!;
-
         [ClassInitialize]
         public static void BeforeAll(TestContext testContext)
         {
-            try
-            {
-                // Use a test database connection string
-                _connectionString = TestDatabaseHelper.GetConnectionString();
-                _connectionFactory = new PostgresConnectionFactory(_connectionString);
-                _fileStore = new PostgresFileStore(_connectionFactory);
-                
-                // Create a simple logger for test output
-                _logger = TestDatabaseHelper.CreateLogger<PostgresFileStoreTests>();
-                
-                // Ensure database is clean and migrated
-                TestDatabaseHelper.SetupDatabase<PostgresFileStoreTests>();
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine($"Failed to initialize PostgreSQL test environment: {exception.Message}");
-                Assert.Inconclusive("Failed to initialize PostgreSQL test environment for integration tests.");
-            }
+            InitializeTestEnvironment();
         }
 
         [ClassCleanup]
         public static void AfterAll()
         {
-            _fileStore = null!;
-            _connectionFactory = null!;
-            _logger = null!;
-            
-            // Clean up the test database
-            TestDatabaseHelper.CleanupDatabase<PostgresFileStoreTests>();
+            CleanupTestEnvironment();
         }
 
         [TestInitialize]
         public void TestInitialize()
         {
-            // Ensure database is clean for each test
-            TestDatabaseHelper.SetupDatabase<PostgresFileStoreTests>();
+            SetupDatabaseForTest();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            // Clean up after each test
-            TestDatabaseHelper.CleanupDatabase<PostgresFileStoreTests>();
+            CleanupDatabaseAfterTest();
         }
 
         [TestMethod]

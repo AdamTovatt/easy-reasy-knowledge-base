@@ -60,7 +60,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
             command.Parameters.AddWithValue("@SectionId", sectionId);
 
             object? result = await command.ExecuteScalarAsync();
-            if (result == null)
+            if (result == null || result == DBNull.Value)
                 throw new InvalidOperationException($"Section with ID {sectionId} not found.");
 
             return (Guid)result;

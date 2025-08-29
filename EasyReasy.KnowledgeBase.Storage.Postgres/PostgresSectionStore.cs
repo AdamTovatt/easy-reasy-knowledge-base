@@ -76,7 +76,10 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
                 // Load chunks for this section
                 IEnumerable<KnowledgeFileChunk> chunks = await _chunkStore.GetBySectionAsync(id);
 
-                return new KnowledgeFileSection(id, fileId, sectionIndex, chunks.ToList(), summary);
+                return new KnowledgeFileSection(id, fileId, sectionIndex, chunks.ToList(), summary)
+                {
+                    AdditionalContext = additionalContext
+                };
             }
 
             return null;
