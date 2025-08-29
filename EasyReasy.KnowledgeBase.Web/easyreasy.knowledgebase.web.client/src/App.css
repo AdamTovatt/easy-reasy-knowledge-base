@@ -28,10 +28,13 @@
     --light-danger-color: #A40E26;
     --dark-text-color: #EFEFF6;
     --light-text-color: #27313f;
-    /* Button gradient */
-    --color-primary: #667eea;
-    --color-primary-dark: #764ba2;
-    --color-border-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Brand/Accent colors */
+    --brand-color-light: #756CB1;
+    --brand-color-dark: #795EA9;
+    --brand-gradient: linear-gradient(135deg, #756CB1 0%, #795EA9 100%);
+    
+    /* Border gradient using brand colors */
+    --color-border-gradient: linear-gradient(135deg, #756CB1 0%, #795EA9 100%);
 }
 
 html[data-theme="light"] {
@@ -372,6 +375,7 @@ html {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
+    margin-bottom: 0;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -411,6 +415,30 @@ html {
     opacity: 0.95;
 }
 
+.ai-message .ai-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.ai-message span:last-child {
+    flex: 1;
+    line-height: 1.5;
+}
+
+.ai-message .react-markdown {
+    margin: 0;
+    padding: 0;
+}
+
+.ai-message .react-markdown p {
+    margin: 0 !important;
+    padding: 0;
+}
+
+.ai-message .react-markdown p:not(:last-child) {
+    margin-bottom: 8px !important;
+}
+
 .user-message {
     align-self: flex-end;
     flex-direction: row-reverse;
@@ -442,7 +470,7 @@ html {
 }
 
 .chat-input-container {
-    padding: 0 20px 20px 20px;
+    padding: 20px;
     border-top: none;
     background: transparent;
     position: relative;
@@ -531,6 +559,12 @@ html {
 .chat-input::placeholder {
     color: var(--color-fg);
     opacity: 0.6;
+}
+
+.chat-input:focus {
+    outline: none;
+    border-color: var(--elevation-level-4-dark);
+    box-shadow: 0 0 8px 2px rgba(121, 94, 169, 0.15);
 }
 
 .input-actions {

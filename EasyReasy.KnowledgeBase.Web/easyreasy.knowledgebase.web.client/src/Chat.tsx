@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowUp, Pause, AlertTriangle } from 'feather-icons-react';
+import { PuffLoader } from 'react-spinners';
+import ReactMarkdown from 'react-markdown';
+import EasyReasyIcon from './assets/icons/easy-reasy-icon-32.png';
 
 const ErrorIcon = () => (
     <div style={{ 
@@ -9,6 +12,32 @@ const ErrorIcon = () => (
         transform: 'translateY(2px)' // Adjust this value as needed
     }}>
         <AlertTriangle size={20} />
+    </div>
+);
+
+const BotIcon = () => (
+    <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        width: '20px',
+        height: '20px',
+        transform: 'translateY(2px)' // Adjust this value as needed
+    }}>
+        <img src={EasyReasyIcon} alt="EasyReasy Bot" style={{ width: '100%', height: '100%' }} />
+    </div>
+);
+
+const ThinkingIcon = () => (
+    <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        width: '20px',
+        height: '20px',
+        transform: 'translateY(-2px) translateX(-5px)'
+    }}>
+        <PuffLoader size={14} color="var(--brand-color-light)" />
     </div>
 );
 
@@ -22,14 +51,23 @@ function Chat() {
     const [isStreaming, setIsStreaming] = useState(false);
     const [chatHistory, setChatHistory] = useState<string[]>([]);
     const [currentResponse, setCurrentResponse] = useState('');
+    const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
-        if (chatContainerRef.current) {
+        if (chatContainerRef.current && shouldAutoScroll) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
-    }, [chatHistory, currentResponse]);
+    }, [chatHistory, currentResponse, shouldAutoScroll]);
+
+    const handleScroll = () => {
+        if (chatContainerRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
+            setShouldAutoScroll(isAtBottom);
+        }
+    };
 
     // Set initial textarea height on mount
     useEffect(() => {
@@ -55,6 +93,9 @@ function Chat() {
 
         // Add user message to chat history
         setChatHistory(prev => [...prev, `You: ${userMessage}`]);
+        
+        // Reset auto-scroll when user sends a new message
+        setShouldAutoScroll(true);
 
         // Create abort controller for this request
         abortControllerRef.current = new AbortController();
@@ -192,7 +233,7 @@ function Chat() {
             {/* Main Chat Area */}
             <div className="chat-main">
                 
-                <div className="chat-messages" ref={chatContainerRef}>
+                <div className="chat-messages" ref={chatContainerRef} onScroll={handleScroll}>
                     <div className="messages-container">
                         {chatHistory.map((message, index) => {
                             const isUserMessage = message.startsWith('You:');
@@ -200,31 +241,53 @@ function Chat() {
                             
                             return (
                                 <div key={index} className={`message ${isUserMessage ? 'user-message' : 'ai-message'} ${isErrorMessage ? 'error-message' : ''}`}>
-                                    {isUserMessage ? (
-                                        <span>{message.replace('You: ', '')}</span>
-                                    ) : (
-                                        <>
-                                            {isErrorMessage ? (
-                                                <span className="ai-icon">
-                                                    <ErrorIcon />
-                                                </span>
-                                            ) : (
-                                                <span className="ai-icon">🤖</span>
-                                            )}
-                                            <span>
-                                                {message.replace('AI: ', '').replace('Error: ', '')}
-                                            </span>
-                                        </>
-                                    )}
+                                                                         {isUserMessage ? (
+                                         <span>{message.replace('You: ', '')}</span>
+                                     ) : (
+                                         <>
+                                             {isErrorMessage ? (
+                                                 <span className="ai-icon">
+                                                     <ErrorIcon />
+                                                 </span>
+                                             ) : (
+                                                 <span className="ai-icon">
+                                                     <BotIcon />
+                                                 </span>
+                                             )}
+                                             <span>
+                                                 <ReactMarkdown
+                                                     components={{
+                                                         p: ({ children }) => <span>{children}</span>
+                                                     }}
+                                                 >
+                                                     {message.replace('AI: ', '').replace('Error: ', '')}
+                                                 </ReactMarkdown>
+                                             </span>
+                                         </>
+                                     )}
                                 </div>
                             );
                         })}
-                        {isStreaming && (
-                            <div className="message ai-message">
-                                <span className="ai-icon">🤖</span>
-                                <span>{currentResponse || 'Thinking...'}</span>
-                            </div>
-                        )}
+                                                 {isStreaming && (
+                             <div className="message ai-message">
+                                 <span className="ai-icon">
+                                     {currentResponse ? <BotIcon /> : <ThinkingIcon />}
+                                 </span>
+                                 <span>
+                                     {currentResponse ? (
+                                         <ReactMarkdown
+                                             components={{
+                                                 p: ({ children }) => <span>{children}</span>
+                                             }}
+                                         >
+                                             {currentResponse}
+                                         </ReactMarkdown>
+                                     ) : (
+                                         'Thinking...'
+                                     )}
+                                 </span>
+                             </div>
+                         )}
                     </div>
                 </div>
 
@@ -270,3 +333,4 @@ function Chat() {
 }
 
 export default Chat;
+
