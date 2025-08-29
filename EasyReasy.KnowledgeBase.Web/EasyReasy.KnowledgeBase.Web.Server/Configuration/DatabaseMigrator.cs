@@ -3,7 +3,7 @@ using DbUp.Engine;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
 {
-    public static class DatabaseMigration
+    public static class DatabaseMigrator
     {
         public static bool RunMigrations(string connectionString, ILogger logger)
         {
@@ -13,7 +13,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
 
             UpgradeEngine upgrader = DeployChanges.To
                 .PostgresqlDatabase(connectionString)
-                .WithScriptsEmbeddedInAssembly(typeof(DatabaseMigration).Assembly)
+                .WithScriptsEmbeddedInAssembly(typeof(DatabaseMigrator).Assembly)
                 .LogTo(new DbUpLogger(logger))
                 .WithTransaction()
                 .Build();

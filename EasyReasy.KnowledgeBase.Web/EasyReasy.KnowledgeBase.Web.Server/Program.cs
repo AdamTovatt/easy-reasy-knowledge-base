@@ -46,7 +46,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server
                 "Host=localhost;Database=knowledgebasedb;Username=postgres;Password=password";
             
             ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();
-            bool migrationSuccess = DatabaseMigration.RunMigrations(postgresConnectionString, logger);
+            bool migrationSuccess = DatabaseMigrator.RunMigrations(postgresConnectionString, logger);
             
             if (!migrationSuccess)
             {
