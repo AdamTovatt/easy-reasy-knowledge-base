@@ -21,9 +21,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.KnowledgeBase.Sto
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.KnowledgeBase.Tests", "EasyReasy.KnowledgeBase.Tests\EasyReasy.KnowledgeBase.Tests.csproj", "{D44FBA7F-2F40-4C2A-99C5-7550F1895C4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.KnowledgeBase.Web.Server", "EasyReasy.KnowledgeBase.Web\EasyReasy.KnowledgeBase.Web.Server\EasyReasy.KnowledgeBase.Web.Server.csproj", "{D824CDD7-BFDD-413A-BDFF-A9699991D7BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.KnowledgeBase.Web.Server", "EasyReasy.KnowledgeBase.Web\EasyReasy.KnowledgeBase.Web.Server\EasyReasy.KnowledgeBase.Web.Server.csproj", "{D824CDD7-BFDD-413A-BDFF-A9699991D7BF}"
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "easyreasy.knowledgebase.web.client", "EasyReasy.KnowledgeBase.Web\easyreasy.knowledgebase.web.client\easyreasy.knowledgebase.web.client.esproj", "{4F92D367-6618-4B57-B8D0-81F112BD79AC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.KnowledgeBase.Storage.Postgres", "EasyReasy.KnowledgeBase.Storage.Postgres\EasyReasy.KnowledgeBase.Storage.Postgres.csproj", "{451C27B9-018C-49FD-99E0-8390B747F455}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.KnowledgeBase.Storage.Postgres.Tests", "EasyReasy.KnowledgeBase.Storage.Postgres.Tests\EasyReasy.KnowledgeBase.Storage.Postgres.Tests.csproj", "{3A5CC391-58BE-45FE-8FF3-481F0F7B9679}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,6 +81,14 @@ Global
 		{4F92D367-6618-4B57-B8D0-81F112BD79AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F92D367-6618-4B57-B8D0-81F112BD79AC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4F92D367-6618-4B57-B8D0-81F112BD79AC}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{451C27B9-018C-49FD-99E0-8390B747F455}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{451C27B9-018C-49FD-99E0-8390B747F455}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{451C27B9-018C-49FD-99E0-8390B747F455}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{451C27B9-018C-49FD-99E0-8390B747F455}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A5CC391-58BE-45FE-8FF3-481F0F7B9679}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A5CC391-58BE-45FE-8FF3-481F0F7B9679}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A5CC391-58BE-45FE-8FF3-481F0F7B9679}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A5CC391-58BE-45FE-8FF3-481F0F7B9679}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

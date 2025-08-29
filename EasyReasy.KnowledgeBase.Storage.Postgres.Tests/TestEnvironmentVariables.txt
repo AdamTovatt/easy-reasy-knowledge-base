@@ -1,0 +1,5 @@
+# PostgreSQL Integration Test Configuration
+# Update this file with your actual PostgreSQL server details
+
+# The full PostgreSQL connection string for testing
+POSTGRES_CONNECTION_STRING=Host=localhost;Port=5432;Database=test_knowledgebase;Username=postgres;Password=postgres
