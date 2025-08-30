@@ -84,7 +84,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
                 using NpgsqlCommand checkCommand = new NpgsqlCommand(@"
                     SELECT COUNT(*) FROM information_schema.tables 
                     WHERE table_schema = 'public' 
-                    AND table_name IN ('knowledge_chunks', 'knowledge_sections', 'knowledge_files')", connection);
+                    AND table_name IN ('knowledge_chunk', 'knowledge_section', 'knowledge_file')", connection);
 
                 int tableCount = Convert.ToInt32(checkCommand.ExecuteScalar());
 
@@ -93,9 +93,9 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
                     // Delete all data but keep the schema
                     // Delete in order to respect foreign key constraints
                     using NpgsqlCommand command = new NpgsqlCommand(@"
-                        DELETE FROM knowledge_chunks;
-                        DELETE FROM knowledge_sections;
-                        DELETE FROM knowledge_files;", connection);
+                                    DELETE FROM knowledge_chunk;
+            DELETE FROM knowledge_section;
+            DELETE FROM knowledge_file;", connection);
 
                     int rowsAffected = command.ExecuteNonQuery();
                     logger.LogInformation("Test database cleanup completed successfully. Rows affected: {RowsAffected}", rowsAffected);

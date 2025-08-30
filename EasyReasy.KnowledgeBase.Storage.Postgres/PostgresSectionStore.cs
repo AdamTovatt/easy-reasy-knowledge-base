@@ -37,7 +37,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "INSERT INTO knowledge_sections (id, file_id, section_index, summary, additional_context) VALUES (@Id, @FileId, @SectionIndex, @Summary, @AdditionalContext)",
+                "INSERT INTO knowledge_section (id, file_id, section_index, summary, additional_context) VALUES (@Id, @FileId, @SectionIndex, @Summary, @AdditionalContext)",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", section.Id);
@@ -59,7 +59,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT id, file_id, section_index, summary, additional_context FROM knowledge_sections WHERE id = @Id",
+                "SELECT id, file_id, section_index, summary, additional_context FROM knowledge_section WHERE id = @Id",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", sectionId);
@@ -96,7 +96,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT id, file_id, section_index, summary, additional_context FROM knowledge_sections WHERE file_id = @FileId AND section_index = @SectionIndex",
+                "SELECT id, file_id, section_index, summary, additional_context FROM knowledge_section WHERE file_id = @FileId AND section_index = @SectionIndex",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@FileId", fileId);
@@ -128,7 +128,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "DELETE FROM knowledge_sections WHERE file_id = @FileId",
+                "DELETE FROM knowledge_section WHERE file_id = @FileId",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@FileId", fileId);

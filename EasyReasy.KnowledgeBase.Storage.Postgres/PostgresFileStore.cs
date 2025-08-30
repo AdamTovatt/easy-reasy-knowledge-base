@@ -35,7 +35,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "INSERT INTO knowledge_files (id, name, hash, processed_at, status) VALUES (@Id, @Name, @Hash, @ProcessedAt, @Status)",
+                "INSERT INTO knowledge_file (id, name, hash, processed_at, status) VALUES (@Id, @Name, @Hash, @ProcessedAt, @Status)",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", file.Id);
@@ -58,7 +58,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT id, name, hash, processed_at, status FROM knowledge_files WHERE id = @Id",
+                "SELECT id, name, hash, processed_at, status FROM knowledge_file WHERE id = @Id",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", fileId);
@@ -87,7 +87,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT COUNT(*) FROM knowledge_files WHERE id = @Id",
+                "SELECT COUNT(*) FROM knowledge_file WHERE id = @Id",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", fileId);
@@ -107,7 +107,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT id, name, hash, processed_at, status FROM knowledge_files ORDER BY processed_at DESC",
+                "SELECT id, name, hash, processed_at, status FROM knowledge_file ORDER BY processed_at DESC",
                 (NpgsqlConnection)connection);
 
             using NpgsqlDataReader reader = await command.ExecuteReaderAsync();
@@ -136,7 +136,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "UPDATE knowledge_files SET name = @Name, hash = @Hash, processed_at = @ProcessedAt, status = @Status WHERE id = @Id",
+                "UPDATE knowledge_file SET name = @Name, hash = @Hash, processed_at = @ProcessedAt, status = @Status WHERE id = @Id",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", file.Id);
@@ -160,7 +160,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "DELETE FROM knowledge_files WHERE id = @Id",
+                "DELETE FROM knowledge_file WHERE id = @Id",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", fileId);

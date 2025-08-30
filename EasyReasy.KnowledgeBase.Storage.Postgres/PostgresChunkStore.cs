@@ -54,7 +54,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
         {
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT file_id FROM knowledge_sections WHERE id = @SectionId",
+                "SELECT file_id FROM knowledge_section WHERE id = @SectionId",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@SectionId", sectionId);
@@ -78,7 +78,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "INSERT INTO knowledge_chunks (id, section_id, chunk_index, content, embedding, file_id) VALUES (@Id, @SectionId, @ChunkIndex, @Content, @Embedding, @FileId)",
+                "INSERT INTO knowledge_chunk (id, section_id, chunk_index, content, embedding, file_id) VALUES (@Id, @SectionId, @ChunkIndex, @Content, @Embedding, @FileId)",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", chunk.Id);
@@ -101,7 +101,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT id, section_id, chunk_index, content, embedding FROM knowledge_chunks WHERE id = @Id",
+                "SELECT id, section_id, chunk_index, content, embedding FROM knowledge_chunk WHERE id = @Id",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@Id", chunkId);
@@ -138,7 +138,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
             // Use a parameterized query with multiple values
             string placeholders = string.Join(",", ids.Select((_, i) => $"@Id{i}"));
             using NpgsqlCommand command = new NpgsqlCommand(
-                $"SELECT id, section_id, chunk_index, content, embedding FROM knowledge_chunks WHERE id IN ({placeholders})",
+                $"SELECT id, section_id, chunk_index, content, embedding FROM knowledge_chunk WHERE id IN ({placeholders})",
                 (NpgsqlConnection)connection);
 
             for (int i = 0; i < ids.Length; i++)
@@ -171,7 +171,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT id, section_id, chunk_index, content, embedding FROM knowledge_chunks WHERE section_id = @SectionId AND chunk_index = @ChunkIndex",
+                "SELECT id, section_id, chunk_index, content, embedding FROM knowledge_chunk WHERE section_id = @SectionId AND chunk_index = @ChunkIndex",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@SectionId", sectionId);
@@ -203,7 +203,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "SELECT id, section_id, chunk_index, content, embedding FROM knowledge_chunks WHERE section_id = @SectionId ORDER BY chunk_index",
+                "SELECT id, section_id, chunk_index, content, embedding FROM knowledge_chunk WHERE section_id = @SectionId ORDER BY chunk_index",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@SectionId", sectionId);
@@ -232,7 +232,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
             using NpgsqlCommand command = new NpgsqlCommand(
-                "DELETE FROM knowledge_chunks WHERE file_id = @FileId",
+                "DELETE FROM knowledge_chunk WHERE file_id = @FileId",
                 (NpgsqlConnection)connection);
 
             command.Parameters.AddWithValue("@FileId", fileId);

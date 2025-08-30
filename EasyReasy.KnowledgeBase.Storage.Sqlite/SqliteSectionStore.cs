@@ -54,13 +54,13 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
             await connection.OpenAsync();
 
             const string createTableSql = @"
-                CREATE TABLE IF NOT EXISTS knowledge_sections (
+                CREATE TABLE IF NOT EXISTS knowledge_section (
                     id TEXT PRIMARY KEY,
                     file_id TEXT NOT NULL,
                     section_index INTEGER NOT NULL,
                     summary TEXT,
                     additional_context TEXT,
-                    FOREIGN KEY (file_id) REFERENCES knowledge_files (id) ON DELETE CASCADE
+                    FOREIGN KEY (file_id) REFERENCES knowledge_file (id) ON DELETE CASCADE
                 )";
 
             using SqliteCommand command = new SqliteCommand(createTableSql, connection);
@@ -68,8 +68,8 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
 
             // Create index for better performance
             const string createIndexSql = @"
-                CREATE INDEX IF NOT EXISTS idx_sections_file_id ON knowledge_sections (file_id);
-                CREATE INDEX IF NOT EXISTS idx_sections_file_index ON knowledge_sections (file_id, section_index)";
+                            CREATE INDEX IF NOT EXISTS idx_sections_file_id ON knowledge_section (file_id);
+            CREATE INDEX IF NOT EXISTS idx_sections_file_index ON knowledge_section (file_id, section_index)";
 
             using SqliteCommand indexCommand = new SqliteCommand(createIndexSql, connection);
             await indexCommand.ExecuteNonQueryAsync();
@@ -92,7 +92,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
             await connection.OpenAsync();
 
             const string insertSql = @"
-                INSERT INTO knowledge_sections (id, file_id, section_index, summary, additional_context) 
+                INSERT INTO knowledge_section (id, file_id, section_index, summary, additional_context) 
                 VALUES (@Id, @FileId, @SectionIndex, @Summary, @AdditionalContext)";
 
             using SqliteCommand command = new SqliteCommand(insertSql, connection);
@@ -120,7 +120,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
 
             const string selectSql = @"
                 SELECT id, file_id, section_index, summary, additional_context 
-                FROM knowledge_sections 
+                FROM knowledge_section 
                 WHERE id = @Id";
 
             IEnumerable<KnowledgeFileChunk> chunks = await _chunkStore.GetBySectionAsync(sectionId);
@@ -165,7 +165,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
 
             const string selectSql = @"
                 SELECT id, file_id, section_index, summary, additional_context 
-                FROM knowledge_sections 
+                FROM knowledge_section 
                 WHERE file_id = @FileId AND section_index = @SectionIndex";
 
             using SqliteCommand command = new SqliteCommand(selectSql, connection);
@@ -208,7 +208,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
             await connection.OpenAsync();
 
             const string deleteSql = @"
-                DELETE FROM knowledge_sections 
+                DELETE FROM knowledge_section 
                 WHERE file_id = @FileId";
 
             using SqliteCommand command = new SqliteCommand(deleteSql, connection);

@@ -66,14 +66,14 @@ services.AddSingleton<IKnowledgeStore>(provider =>
 
 The implementation creates the following tables with data integrity constraints:
 
-### knowledge_files
+### knowledge_file
 - `id` (UUID PRIMARY KEY) - Unique file identifier
 - `name` (TEXT) - File name
 - `hash` (BYTEA) - Content hash for change detection
 - `processed_at` (TIMESTAMP WITH TIME ZONE) - Processing timestamp
 - `status` (INTEGER) - Processing status enum value
 
-### knowledge_sections
+### knowledge_section
 - `id` (UUID PRIMARY KEY) - Unique section identifier
 - `file_id` (UUID) - Reference to parent file
 - `section_index` (INTEGER) - Zero-based index within file
@@ -81,7 +81,7 @@ The implementation creates the following tables with data integrity constraints:
 - `additional_context` (TEXT) - Optional additional context
 - **UNIQUE CONSTRAINT**: `(file_id, section_index)` - Ensures unique section indexes per file
 
-### knowledge_chunks
+### knowledge_chunk
 - `id` (UUID PRIMARY KEY) - Unique chunk identifier
 - `section_id` (UUID) - Reference to parent section
 - `chunk_index` (INTEGER) - Zero-based index within section
@@ -95,8 +95,8 @@ The implementation creates the following tables with data integrity constraints:
 The complete SQL schema used by the PostgreSQL implementation:
 
 ```sql
--- Create knowledge_files table
-CREATE TABLE IF NOT EXISTS knowledge_files (
+-- Create knowledge_file table
+CREATE TABLE IF NOT EXISTS knowledge_file (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL,
     hash BYTEA NOT NULL,
@@ -104,8 +104,8 @@ CREATE TABLE IF NOT EXISTS knowledge_files (
     status INTEGER NOT NULL
 );
 
--- Create knowledge_sections table
-CREATE TABLE IF NOT EXISTS knowledge_sections (
+-- Create knowledge_section table
+CREATE TABLE IF NOT EXISTS knowledge_section (
     id UUID PRIMARY KEY,
     file_id UUID NOT NULL,
     section_index INTEGER NOT NULL,
@@ -114,8 +114,8 @@ CREATE TABLE IF NOT EXISTS knowledge_sections (
     UNIQUE (file_id, section_index)
 );
 
--- Create knowledge_chunks table
-CREATE TABLE IF NOT EXISTS knowledge_chunks (
+-- Create knowledge_chunk table
+CREATE TABLE IF NOT EXISTS knowledge_chunk (
     id UUID PRIMARY KEY,
     section_id UUID NOT NULL,
     chunk_index INTEGER NOT NULL,
@@ -126,11 +126,11 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_chunks_section_id ON knowledge_chunks (section_id);
-CREATE INDEX IF NOT EXISTS idx_chunks_file_id ON knowledge_chunks (file_id);
-CREATE INDEX IF NOT EXISTS idx_chunks_section_index ON knowledge_chunks (section_id, chunk_index);
-CREATE INDEX IF NOT EXISTS idx_sections_file_id ON knowledge_sections (file_id);
-CREATE INDEX IF NOT EXISTS idx_sections_file_index ON knowledge_sections (file_id, section_index);
+CREATE INDEX IF NOT EXISTS idx_chunks_section_id ON knowledge_chunk (section_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_file_id ON knowledge_chunk (file_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_section_index ON knowledge_chunk (section_id, chunk_index);
+CREATE INDEX IF NOT EXISTS idx_sections_file_id ON knowledge_section (file_id);
+CREATE INDEX IF NOT EXISTS idx_sections_file_index ON knowledge_section (file_id, section_index);
 ```
 
 ## Data Integrity & Performance

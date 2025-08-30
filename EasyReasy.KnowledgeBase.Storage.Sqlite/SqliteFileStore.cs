@@ -51,7 +51,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
             await connection.OpenAsync();
 
             const string createTableSql = @"
-                CREATE TABLE IF NOT EXISTS knowledge_files (
+                CREATE TABLE IF NOT EXISTS knowledge_file (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
                     hash BLOB NOT NULL,
@@ -81,7 +81,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
             await connection.OpenAsync();
 
             const string insertSql = @"
-                INSERT INTO knowledge_files (id, name, hash, processed_at, status) 
+                INSERT INTO knowledge_file (id, name, hash, processed_at, status) 
                 VALUES (@Id, @Name, @Hash, @ProcessedAt, @Status)";
 
             using SqliteCommand command = new SqliteCommand(insertSql, connection);
@@ -110,7 +110,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
 
             const string selectSql = @"
                 SELECT id, name, hash, processed_at, status 
-                FROM knowledge_files 
+                FROM knowledge_file 
                 WHERE id = @Id";
 
             using SqliteCommand command = new SqliteCommand(selectSql, connection);
@@ -150,7 +150,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
 
             const string selectSql = @"
                 SELECT COUNT(*) 
-                FROM knowledge_files 
+                FROM knowledge_file 
                 WHERE id = @Id";
 
             using SqliteCommand command = new SqliteCommand(selectSql, connection);
@@ -177,7 +177,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
 
             const string selectSql = @"
                 SELECT id, name, hash, processed_at, status 
-                FROM knowledge_files";
+                FROM knowledge_file";
 
             using SqliteCommand command = new SqliteCommand(selectSql, connection);
             using SqliteDataReader reader = await command.ExecuteReaderAsync();
@@ -221,7 +221,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
             await connection.OpenAsync();
 
             const string updateSql = @"
-                UPDATE knowledge_files 
+                UPDATE knowledge_file 
                 SET name = @Name, hash = @Hash, processed_at = @ProcessedAt, status = @Status 
                 WHERE id = @Id";
 
@@ -251,7 +251,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Sqlite
             await connection.OpenAsync();
 
             const string deleteSql = @"
-                DELETE FROM knowledge_files 
+                DELETE FROM knowledge_file 
                 WHERE id = @Id";
 
             using SqliteCommand command = new SqliteCommand(deleteSql, connection);

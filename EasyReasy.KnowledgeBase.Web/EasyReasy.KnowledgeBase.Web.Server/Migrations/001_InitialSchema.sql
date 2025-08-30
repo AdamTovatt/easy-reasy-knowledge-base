@@ -1,57 +1,32 @@
--- Migration: 001_InitialSchema
--- Description: Initial database schema for EasyReasy Knowledge Base
+-- Migration: 001_CreateUserAuthenticationTables
+-- Description: Creates user authentication tables with UUID primary keys, email-based login, and role-based access control
 
--- Create users table
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- Create user table
+CREATE TABLE IF NOT EXISTS user (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(254) UNIQUE NOT NULL,  -- RFC 5321 max length
+    password_hash TEXT NOT NULL,         -- TEXT for flexibility with hash format
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create knowledge_files table
-CREATE TABLE IF NOT EXISTS knowledge_files (
-    id SERIAL PRIMARY KEY,
-    file_name VARCHAR(500) NOT NULL,
-    file_path VARCHAR(1000) NOT NULL,
-    file_size BIGINT NOT NULL,
-    file_hash VARCHAR(64) NOT NULL,
-    content_type VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(file_path, file_hash)
-);
-
--- Create knowledge_sections table
-CREATE TABLE IF NOT EXISTS knowledge_sections (
-    id SERIAL PRIMARY KEY,
-    knowledge_file_id INTEGER NOT NULL REFERENCES knowledge_files(id) ON DELETE CASCADE,
-    section_name VARCHAR(255),
-    section_content TEXT NOT NULL,
-    section_order INTEGER NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(knowledge_file_id, section_order)
-);
-
--- Create knowledge_chunks table
-CREATE TABLE IF NOT EXISTS knowledge_chunks (
-    id SERIAL PRIMARY KEY,
-    knowledge_section_id INTEGER NOT NULL REFERENCES knowledge_sections(id) ON DELETE CASCADE,
-    chunk_content TEXT NOT NULL,
-    chunk_order INTEGER NOT NULL,
-    embedding_vector REAL[],
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(knowledge_section_id, chunk_order)
+-- Create user_role table for many-to-many relationship
+CREATE TABLE IF NOT EXISTS user_role (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+    role_name VARCHAR(50) NOT NULL,  -- e.g., 'admin', 'user', 'moderator'
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, role_name)
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_knowledge_files_path ON knowledge_files(file_path);
-CREATE INDEX IF NOT EXISTS idx_knowledge_files_hash ON knowledge_files(file_hash);
-CREATE INDEX IF NOT EXISTS idx_knowledge_sections_file_id ON knowledge_sections(knowledge_file_id);
-CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_section_id ON knowledge_chunks(knowledge_section_id);
-CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_embedding ON knowledge_chunks USING GIN(embedding_vector);
+CREATE INDEX IF NOT EXISTS idx_user_email ON user(email);
+CREATE INDEX IF NOT EXISTS idx_user_role_user_id ON user_role(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_role_role_name ON user_role(role_name);
 
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -63,8 +38,5 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers to automatically update updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_knowledge_files_updated_at BEFORE UPDATE ON knowledge_files
+CREATE TRIGGER update_user_updated_at BEFORE UPDATE ON user
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

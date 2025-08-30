@@ -12,7 +12,7 @@ This project uses DbUp to manage PostgreSQL database migrations.
 ## Adding New Migrations
 
 1. Create a new SQL file in the `Migrations/` folder
-2. Use the naming convention: `XXX_Description.sql` (e.g., `002_AddUserPreferences.sql`)
+2. Use the naming convention: `XXX_Description.sql` (e.g., `002_AddUserPreferenceTable.sql`)
 3. Write your PostgreSQL SQL script
 4. The migration will run automatically on the next application start
 
@@ -22,24 +22,25 @@ This project uses DbUp to manage PostgreSQL database migrations.
 - Use `CREATE OR REPLACE` for functions and procedures
 - Always include a comment header with migration number and description
 - Test migrations on a copy of your database before applying to production
+- Use singular table names (e.g., `user` not `users`)
 
 ## Example Migration Script
 
 ```sql
--- Migration: 002_AddUserPreferences
--- Description: Add user preferences table
+-- Migration: 002_AddUserPreferenceTable
+-- Description: Creates user_preference table with UUID primary keys for storing user-specific settings
 
-CREATE TABLE IF NOT EXISTS user_preferences (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS user_preference (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES user(id) ON DELETE CASCADE,
     preference_key VARCHAR(100) NOT NULL,
     preference_value TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, preference_key)
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_preference_user_id ON user_preference(user_id);
 ```
 
 ## Configuration

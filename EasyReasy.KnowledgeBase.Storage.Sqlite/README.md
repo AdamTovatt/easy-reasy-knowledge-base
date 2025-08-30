@@ -140,38 +140,38 @@ KnowledgeFileSection? section = await knowledgeStore.Sections.GetAsync(sectionId
 
 The SQLite implementation automatically creates the following schema:
 
-### knowledge_files Table
+### knowledge_file Table
 ```sql
-CREATE TABLE knowledge_files (
+CREATE TABLE knowledge_file (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     hash BLOB NOT NULL
 );
 ```
 
-### knowledge_sections Table
+### knowledge_section Table
 ```sql
-CREATE TABLE knowledge_sections (
+CREATE TABLE knowledge_section (
     id TEXT PRIMARY KEY,
     file_id TEXT NOT NULL,
     section_index INTEGER NOT NULL,
     summary TEXT,
     additional_context TEXT,
     embedding BLOB,
-    FOREIGN KEY (file_id) REFERENCES knowledge_files (id) ON DELETE CASCADE
+    FOREIGN KEY (file_id) REFERENCES knowledge_file (id) ON DELETE CASCADE
 );
 ```
 
-### knowledge_chunks Table
+### knowledge_chunk Table
 ```sql
-CREATE TABLE knowledge_chunks (
+CREATE TABLE knowledge_chunk (
     id TEXT PRIMARY KEY,
     section_id TEXT NOT NULL,
     chunk_index INTEGER NOT NULL,
     content TEXT NOT NULL,
     embedding BLOB,
     file_id TEXT NOT NULL,
-    FOREIGN KEY (section_id) REFERENCES knowledge_sections (id) ON DELETE CASCADE
+    FOREIGN KEY (section_id) REFERENCES knowledge_section (id) ON DELETE CASCADE
 );
 ```
 
@@ -180,13 +180,13 @@ The implementation automatically creates indexes for optimal performance:
 
 ```sql
 -- Section indexes
-CREATE INDEX idx_sections_file_id ON knowledge_sections (file_id);
-CREATE INDEX idx_sections_file_index ON knowledge_sections (file_id, section_index);
+CREATE INDEX idx_sections_file_id ON knowledge_section (file_id);
+CREATE INDEX idx_sections_file_index ON knowledge_section (file_id, section_index);
 
 -- Chunk indexes
-CREATE INDEX idx_chunks_section_id ON knowledge_chunks (section_id);
-CREATE INDEX idx_chunks_file_id ON knowledge_chunks (file_id);
-CREATE INDEX idx_chunks_section_index ON knowledge_chunks (section_id, chunk_index);
+CREATE INDEX idx_chunks_section_id ON knowledge_chunk (section_id);
+CREATE INDEX idx_chunks_file_id ON knowledge_chunk (file_id);
+CREATE INDEX idx_chunks_section_index ON knowledge_chunk (section_id, chunk_index);
 ```
 
 ## Advanced Usage
