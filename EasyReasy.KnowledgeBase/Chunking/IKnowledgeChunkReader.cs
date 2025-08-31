@@ -1,4 +1,4 @@
-﻿namespace EasyReasy.KnowledgeBase.Chunking
+namespace EasyReasy.KnowledgeBase.Chunking
 {
     /// <summary>
     /// Defines a contract for reading knowledge content in chunks from a stream.

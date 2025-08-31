@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.KnowledgeBase.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.KnowledgeBase.Web.Server", "EasyReasy.KnowledgeBase.Web\EasyReasy.KnowledgeBase.Web.Server\EasyReasy.KnowledgeBase.Web.Server.csproj", "{D824CDD7-BFDD-413A-BDFF-A9699991D7BF}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyReasy.KnowledgeBase.Web.Server.Tests", "EasyReasy.KnowledgeBase.Web\EasyReasy.KnowledgeBase.Web.Server.Tests\EasyReasy.KnowledgeBase.Web.Server.Tests.csproj", "{B5C8D9E1-F2A3-4567-89AB-CDEF12345678}"
+EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "easyreasy.knowledgebase.web.client", "EasyReasy.KnowledgeBase.Web\easyreasy.knowledgebase.web.client\easyreasy.knowledgebase.web.client.esproj", "{4F92D367-6618-4B57-B8D0-81F112BD79AC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyReasy.KnowledgeBase.Storage.Postgres", "EasyReasy.KnowledgeBase.Storage.Postgres\EasyReasy.KnowledgeBase.Storage.Postgres.csproj", "{451C27B9-018C-49FD-99E0-8390B747F455}"
@@ -75,6 +77,10 @@ Global
 		{D824CDD7-BFDD-413A-BDFF-A9699991D7BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D824CDD7-BFDD-413A-BDFF-A9699991D7BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D824CDD7-BFDD-413A-BDFF-A9699991D7BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5C8D9E1-F2A3-4567-89AB-CDEF12345678}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5C8D9E1-F2A3-4567-89AB-CDEF12345678}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5C8D9E1-F2A3-4567-89AB-CDEF12345678}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5C8D9E1-F2A3-4567-89AB-CDEF12345678}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4F92D367-6618-4B57-B8D0-81F112BD79AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4F92D367-6618-4B57-B8D0-81F112BD79AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F92D367-6618-4B57-B8D0-81F112BD79AC}.Debug|Any CPU.Deploy.0 = Debug|Any CPU

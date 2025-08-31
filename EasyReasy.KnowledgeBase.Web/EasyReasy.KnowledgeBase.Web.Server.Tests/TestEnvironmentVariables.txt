@@ -1,0 +1,23 @@
+# Test Environment Variables for EasyReasy.KnowledgeBase.Web.Server.Tests
+# Copy these to your environment or use a tool like dotenv to load them
+
+# Database Configuration
+DATABASE_CONNECTION_STRING=Data Source=test_knowledgebase.db
+POSTGRES_CONNECTION_STRING=Host=localhost;Port=5432;Database=test_knowledgebase;Username=test_user;Password=test_password
+
+# Vector Store Configuration
+VECTOR_STORE_SAVE_PATH=./test_vector_store
+
+# Ollama Configuration
+OLLAMA_SERVER_URL_1=http://localhost:11434
+OLLAMA_SERVER_API_KEY_1=test_api_key
+OLLAMA_EMBEDDING_MODEL_NAME=test_embedding_model
+OLLAMA_SMALL_TEXT_COMPLETION_MODEL_NAME=test_small_model
+OLLAMA_LARGE_TEXT_COMPLETION_MODEL_NAME=test_large_model
+OLLAMA_REASONING_TEXT_COMPLETION_MODEL_NAME=test_reasoning_model
+
+# JWT Configuration
+JWT_SIGNING_SECRET=test-jwt-signing-secret-at-least-32-characters-long
+
+# Logging Configuration
+LOG_LEVEL=Information
