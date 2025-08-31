@@ -7,6 +7,8 @@ using EasyReasy.Auth;
 using Microsoft.AspNetCore.Http.Json;
 using EasyReasy.KnowledgeBase.Web.Server.Services.Auth;
 using EasyReasy.KnowledgeBase.Web.Server.Services.Account;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Storage;
+using EasyReasy.FileStorage;
 
 namespace EasyReasy.KnowledgeBase.Web.Server
 {
@@ -27,6 +29,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server
                 options.SerializerOptions.PropertyNameCaseInsensitive = JsonConfiguration.DefaultOptions.PropertyNameCaseInsensitive;
             });
 
+            // Add memory cache for upload sessions
+            builder.Services.AddMemoryCache();
+
             // Configure EasyReasy.Auth
             string jwtSecret = EnvironmentVariable.JwtSigningSecret.GetValue();
             builder.Services.AddEasyReasyAuth(jwtSecret, issuer: "easyreasy-knowledgebase");
@@ -43,9 +48,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server
 
             // Register repositories
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IFileRepository, FileRepository>();
+
+            // Register file storage system
+            string fileStorageBasePath = EnvironmentVariable.FileStorageBasePath.GetValue();
+            builder.Services.AddSingleton<IFileSystem>(new LocalFileSystem(fileStorageBasePath));
 
             // Register services
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
             // Add services to the container.
             AiServiceConfigurator.ConfigureAllAiServices(builder.Services);

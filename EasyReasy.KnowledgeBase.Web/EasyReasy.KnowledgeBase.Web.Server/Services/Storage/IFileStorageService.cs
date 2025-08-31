@@ -8,19 +8,67 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
     public interface IFileStorageService
     {
         /// <summary>
-        /// Stores a file in the specified knowledge base.
+        /// Initiates a chunked upload session for a file.
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
-        /// <param name="fileName">The name of the file to store.</param>
-        /// <param name="fileStream">The file content stream.</param>
+        /// <param name="fileName">The name of the file to upload.</param>
         /// <param name="contentType">The MIME type of the file.</param>
+        /// <param name="totalSize">The total size of the file in bytes.</param>
+        /// <param name="chunkSize">The size of each chunk in bytes.</param>
+        /// <param name="uploadedByUserId">The unique identifier of the user uploading the file.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
-        /// <returns>Information about the stored file.</returns>
-        Task<StoredFileInfo> StoreFileAsync(
-            string knowledgeBaseId, 
-            string fileName, 
-            Stream fileStream, 
+        /// <returns>The created upload session information.</returns>
+        Task<ChunkedUploadSession> InitiateChunkedUploadAsync(
+            Guid knowledgeBaseId,
+            string fileName,
             string contentType,
+            long totalSize,
+            int chunkSize,
+            Guid uploadedByUserId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Uploads a chunk of data to an existing upload session.
+        /// </summary>
+        /// <param name="sessionId">The unique identifier for the upload session.</param>
+        /// <param name="chunkNumber">The zero-based index of the chunk being uploaded.</param>
+        /// <param name="chunkData">The chunk data stream.</param>
+        /// <param name="cancellationToken">Cancellation token for async operation.</param>
+        /// <returns>The updated upload session information.</returns>
+        Task<ChunkedUploadSession> UploadChunkAsync(
+            Guid sessionId,
+            int chunkNumber,
+            Stream chunkData,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Completes a chunked upload session and creates the final file.
+        /// </summary>
+        /// <param name="sessionId">The unique identifier for the upload session.</param>
+        /// <param name="cancellationToken">Cancellation token for async operation.</param>
+        /// <returns>Information about the completed file upload.</returns>
+        Task<FileDto> CompleteChunkedUploadAsync(
+            Guid sessionId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets the status of a chunked upload session.
+        /// </summary>
+        /// <param name="sessionId">The unique identifier for the upload session.</param>
+        /// <param name="cancellationToken">Cancellation token for async operation.</param>
+        /// <returns>The upload session information, or null if not found.</returns>
+        Task<ChunkedUploadSession?> GetChunkedUploadSessionAsync(
+            Guid sessionId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Cancels and cleans up a chunked upload session.
+        /// </summary>
+        /// <param name="sessionId">The unique identifier for the upload session.</param>
+        /// <param name="cancellationToken">Cancellation token for async operation.</param>
+        /// <returns>True if the session was cancelled, false if it didn't exist.</returns>
+        Task<bool> CancelChunkedUploadAsync(
+            Guid sessionId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -30,9 +78,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>Information about the stored file, or null if not found.</returns>
-        Task<StoredFileInfo?> GetFileInfoAsync(
-            string knowledgeBaseId, 
-            string fileId, 
+        Task<FileDto?> GetFileInfoAsync(
+            Guid knowledgeBaseId, 
+            Guid fileId, 
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -43,8 +91,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>A stream to read the file content.</returns>
         Task<Stream> GetFileStreamAsync(
-            string knowledgeBaseId, 
-            string fileId, 
+            Guid knowledgeBaseId, 
+            Guid fileId, 
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -55,8 +103,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>The file content as text.</returns>
         Task<string> GetFileContentAsync(
-            string knowledgeBaseId, 
-            string fileId, 
+            Guid knowledgeBaseId, 
+            Guid fileId, 
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -67,8 +115,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>True if the file was deleted, false if it didn't exist.</returns>
         Task<bool> DeleteFileAsync(
-            string knowledgeBaseId, 
-            string fileId, 
+            Guid knowledgeBaseId, 
+            Guid fileId, 
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -77,8 +125,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>A collection of file information objects.</returns>
-        Task<IEnumerable<StoredFileInfo>> ListFilesAsync(
-            string knowledgeBaseId, 
+        Task<IEnumerable<FileDto>> ListFilesAsync(
+            Guid knowledgeBaseId, 
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -89,8 +137,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>True if the file exists, false otherwise.</returns>
         Task<bool> FileExistsAsync(
-            string knowledgeBaseId, 
-            string fileId, 
+            Guid knowledgeBaseId, 
+            Guid fileId, 
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -99,7 +147,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         Task EnsureKnowledgeBaseExistsAsync(
-            string knowledgeBaseId, 
+            Guid knowledgeBaseId, 
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -109,7 +157,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>True if the knowledge base was deleted, false if it didn't exist.</returns>
         Task<bool> DeleteKnowledgeBaseAsync(
-            string knowledgeBaseId, 
+            Guid knowledgeBaseId, 
             CancellationToken cancellationToken = default);
     }
 }

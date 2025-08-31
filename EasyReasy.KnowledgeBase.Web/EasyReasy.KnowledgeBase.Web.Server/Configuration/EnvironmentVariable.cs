@@ -63,6 +63,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
         public static readonly VariableName JwtSigningSecret = new VariableName("JWT_SIGNING_SECRET");
 
         /// <summary>
+        /// Base path for file storage operations.
+        /// </summary>
+        [EnvironmentVariableName(minLength: 1)]
+        public static readonly VariableName FileStorageBasePath = new VariableName("FILE_STORAGE_BASE_PATH");
+
+        /// <summary>
         /// Logging level configuration.
         /// </summary>
         [EnvironmentVariableName]
