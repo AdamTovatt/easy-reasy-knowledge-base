@@ -1,5 +1,5 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, RefreshCw, X, ChevronDown, ChevronRight } from 'feather-icons-react';
+import { useCallback, useState, useEffect } from 'react';
+import { AlertTriangle, CheckCircle, RefreshCw, ChevronDown, ChevronRight } from 'feather-icons-react';
 import { useServiceHealth } from '../utils/useServiceHealth';
 import type { ServiceHealthResponse } from '../utils/serviceHealthTypes';
 
@@ -24,12 +24,12 @@ export function ServiceHealthNotification({
     const [, forceUpdate] = useState({});
     // State to track which service items are expanded
     const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set());
-    // State to track if healthy notification should be hidden
-    const [hideHealthy, setHideHealthy] = useState(false);
-    // State to track if element should be removed from DOM
-    const [removeFromDOM, setRemoveFromDOM] = useState(false);
-    // State to track previous health status to detect changes
-    const [previousHealthStatus, setPreviousHealthStatus] = useState<boolean | undefined>(undefined);
+    // State to track if this is the initial load
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    // State to control showing healthy notification on initial load
+    const [showHealthyInitial, setShowHealthyInitial] = useState(true);
+    // State to control fade animation
+    const [isFadingOut, setIsFadingOut] = useState(false);
 
     // Memoize the callback to prevent infinite loops
     const memoizedOnHealthChange = useCallback((healthData: ServiceHealthResponse) => {
@@ -56,42 +56,40 @@ export function ServiceHealthNotification({
         return () => clearInterval(interval);
     }, [lastUpdated]);
 
-    // Auto-hide healthy notifications after 5 seconds
+    // Handle initial load - show healthy notification for 5 seconds then fade out
     useEffect(() => {
         if (!health || isLoading) return;
 
-        // Check if health status has changed
-        const healthStatusChanged = previousHealthStatus !== undefined && previousHealthStatus !== health.isHealthy;
-        
-        if (health.isHealthy) {
-            // Reset states and start timer if health status changed from unhealthy to healthy
-            // OR if this is the first time we're seeing healthy status (previousHealthStatus is undefined)
-            if (healthStatusChanged || previousHealthStatus === undefined) {
-                setHideHealthy(false);
-                setRemoveFromDOM(false);
-                
-                // Set timer to start fade after 5 seconds
-                const timer = setTimeout(() => {
-                    setHideHealthy(true);
-                    // Remove from DOM after fade animation completes (0.5s)
-                    const removeTimer = setTimeout(() => {
-                        setRemoveFromDOM(true);
+        if (isInitialLoad) {
+            const timer = setTimeout(() => {
+                if (health.isHealthy) {
+                    // Start fade out animation first
+                    setIsFadingOut(true);
+                    // Hide completely after fade animation (0.5s)
+                    const hideTimer = setTimeout(() => {
+                        setShowHealthyInitial(false);
+                        setIsFadingOut(false);
+                        setIsInitialLoad(false);
                     }, 500);
                     
-                    return () => clearTimeout(removeTimer);
-                }, 5000);
+                    return () => clearTimeout(hideTimer);
+                } else {
+                    // If unhealthy, just mark initial load as complete
+                    setIsInitialLoad(false);
+                }
+            }, 5000);
 
-                return () => clearTimeout(timer);
-            }
-        } else {
-            // Reset states when health becomes unhealthy
-            setHideHealthy(false);
-            setRemoveFromDOM(false);
+            return () => clearTimeout(timer);
         }
-        
-        // Update previous health status
-        setPreviousHealthStatus(health.isHealthy);
-    }, [health?.isHealthy, isLoading, previousHealthStatus]);
+    }, [health?.isHealthy, isLoading, isInitialLoad]);
+
+    // Reset states when health changes from healthy to unhealthy
+    useEffect(() => {
+        if (health && !health.isHealthy) {
+            setShowHealthyInitial(true);
+            setIsFadingOut(false);
+        }
+    }, [health?.isHealthy]);
 
     const toggleServiceExpansion = (serviceName: string) => {
         setExpandedServices(prev => {
@@ -105,29 +103,33 @@ export function ServiceHealthNotification({
         });
     };
 
-    // Don't render anything if we're still loading and should only show when unhealthy
-    if (isLoading && showOnlyWhenUnhealthy) {
+    // Determine if we should show the notification
+    const shouldShow = () => {
+        // Don't show anything if there's no health data yet
+        if (!health) return false;
+        
+        // Always show if loading
+        if (isLoading) return true;
+        
+        // Always show if unhealthy
+        if (!health.isHealthy) return true;
+        
+        // For healthy services:
+        if (showOnlyWhenUnhealthy) {
+            // Only show healthy during initial load period when showHealthyInitial is true
+            return showHealthyInitial;
+        } else {
+            // Always show if not configured to hide when healthy
+            return true;
+        }
+    };
+
+    if (!shouldShow()) {
         return null;
     }
 
-    // Don't render anything if all services are healthy and we only want to show unhealthy
-    if (health?.isHealthy && showOnlyWhenUnhealthy) {
-        return null;
-    }
-
-    // Don't render anything if there's no health data yet
-    if (!health) {
-        return null;
-    }
-
-    // Don't render anything if healthy notification should be removed from DOM
-    if (health.isHealthy && removeFromDOM) {
-        return null;
-    }
-
-    const isHealthy = health.isHealthy;
-    const unhealthyServices = health.services.filter(service => !service.isAvailable);
-    const healthyServices = health.services.filter(service => service.isAvailable);
+    const isHealthy = health?.isHealthy ?? false;
+    const unhealthyServices = health?.services.filter(service => !service.isAvailable) ?? [];
 
     const getStatusIcon = () => {
         if (isLoading) {
@@ -142,10 +144,10 @@ export function ServiceHealthNotification({
         }
         
         if (isHealthy) {
-            return `All ${health.totalServicesCount} services are healthy`;
+            return `All ${health?.totalServicesCount ?? 0} services are healthy`;
         }
         
-        return `${health.availableServicesCount}/${health.totalServicesCount} services available`;
+        return `${health?.availableServicesCount ?? 0}/${health?.totalServicesCount ?? 0} services available`;
     };
 
     const getStatusClass = () => {
@@ -176,7 +178,7 @@ export function ServiceHealthNotification({
     };
 
     return (
-        <div className={`service-health-notification ${getStatusClass()} ${className} ${health.isHealthy && hideHealthy ? 'fade-out' : ''}`}>
+        <div className={`service-health-notification ${getStatusClass()} ${className} ${isFadingOut ? 'fade-out' : ''}`}>
             <div className="notification-header">
                 <div className="status-info">
                     <span className="status-icon">

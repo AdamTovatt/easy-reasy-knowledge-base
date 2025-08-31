@@ -8,7 +8,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
     public class UpdateUserRequest
     {
         /// <summary>
-        /// Gets or sets the user's email address, which will serve as the username for authentication.
+        /// Gets or sets the user's email address, which will serve as the login identifier for authentication.
         /// </summary>
         [EmailAddress]
         [MaxLength(254)] // RFC 5321 max length

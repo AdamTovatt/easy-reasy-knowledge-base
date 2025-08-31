@@ -6,7 +6,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.BaseClasses
     {
         protected static void LoadTestEnvironmentVariables()
         {
-            EnvironmentVariableHelper.LoadVariablesFromFile("TestEnvironmentVariables.txt");
+            EnvironmentVariableHelper.LoadVariablesFromFile("..\\..\\TestEnvironmentVariables.txt");
         }
     }
 }

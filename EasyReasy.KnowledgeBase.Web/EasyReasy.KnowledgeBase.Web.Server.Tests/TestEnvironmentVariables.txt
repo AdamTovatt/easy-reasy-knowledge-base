@@ -21,3 +21,8 @@ JWT_SIGNING_SECRET=test-jwt-signing-secret-at-least-32-characters-long
 
 # Logging Configuration
 LOG_LEVEL=Information
+
+# Password Hash Generation for Manual Database Insertion
+# Uncomment and set these values when you want to generate a password hash for manual database insertion
+# TEST_PASSWORD_TO_HASH=your_password_here
+# TEST_EMAIL_FOR_HASHING=user@example.com

@@ -8,7 +8,7 @@ interface LoginResponse {
 }
 
 function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => void }) {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -17,8 +17,8 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!username.trim() || !password.trim()) {
-            setError('Please enter both username and password');
+        if (!email.trim() || !password.trim()) {
+            setError('Please enter both email and password');
             return;
         }
 
@@ -33,12 +33,12 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ username: email, password }),
             });
 
             if (!response.ok) {
                 if (response.status === 401) {
-                    throw new Error('Invalid username or password');
+                    throw new Error('Invalid email or password');
                 } else {
                     throw new Error(`Login failed: ${response.status}`);
                 }
@@ -76,13 +76,13 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
                     )}
 
                     <div className="form-group">
-                        <label htmlFor="username">Username</label>
+                        <label htmlFor="email">Email</label>
                         <input
-                            type="text"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Enter your username"
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Enter your email"
                             disabled={isLoading}
                             required
                             autoComplete="off"
@@ -116,7 +116,7 @@ function Login({ onLogin }: { onLogin: (token: string, expiresAt: string) => voi
                     <button
                         type="submit"
                         className="login-button"
-                        disabled={isLoading || !username.trim() || !password.trim()}
+                        disabled={isLoading || !email.trim() || !password.trim()}
                     >
                         {isLoading ? (
                             <span>Signing in...</span>

@@ -338,7 +338,7 @@ function Chat({ onLogout }: { onLogout: () => void }) {
                     <div className="messages-container">
                         {/* Service Health Notification */}
                         <ServiceHealthNotification 
-                            showOnlyWhenUnhealthy={false}
+                            showOnlyWhenUnhealthy={true}
                             autoRefresh={true}
                             refreshIntervalMs={30000}
                             className="chat-health-notification"

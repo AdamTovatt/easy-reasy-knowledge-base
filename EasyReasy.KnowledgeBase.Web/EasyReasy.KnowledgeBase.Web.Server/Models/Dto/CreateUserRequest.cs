@@ -8,7 +8,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
     public class CreateUserRequest
     {
         /// <summary>
-        /// Gets or sets the user's email address, which will serve as the username for authentication.
+        /// Gets or sets the user's email address, which will serve as the login identifier for authentication.
         /// </summary>
         [Required]
         [EmailAddress]

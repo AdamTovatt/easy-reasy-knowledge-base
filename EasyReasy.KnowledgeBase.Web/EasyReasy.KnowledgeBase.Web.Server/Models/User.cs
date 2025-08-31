@@ -11,7 +11,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
         public Guid Id { get; set; }
         
         /// <summary>
-        /// Gets or sets the user's email address, which serves as the username for authentication.
+        /// Gets or sets the user's email address, which serves as the login identifier for authentication.
         /// </summary>
         public string Email { get; set; }
         

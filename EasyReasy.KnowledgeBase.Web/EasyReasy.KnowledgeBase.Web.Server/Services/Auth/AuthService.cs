@@ -8,11 +8,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Auth
 {
     public class AuthService : IAuthRequestValidationService
     {
-        private readonly IUserService _userService;
+        private readonly IServiceProvider _serviceProvider;
 
-        public AuthService(IUserService userService)
+        public AuthService(IServiceProvider serviceProvider)
         {
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
         public Task<AuthResponse?> ValidateApiKeyRequestAsync(ApiKeyAuthRequest request, IJwtTokenService jwtTokenService, HttpContext? httpContext = null)
@@ -26,13 +26,17 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Auth
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
                 return null;
 
+            // Get the user service from the HTTP context's service provider (scoped) or fall back to root provider
+            IUserService userService = httpContext?.RequestServices.GetRequiredService<IUserService>() 
+                ?? _serviceProvider.GetRequiredService<IUserService>();
+
             // Validate credentials using the user service
-            User? user = await _userService.ValidateCredentialsAsync(request.Username, request.Password);
+            User? user = await userService.ValidateCredentialsAsync(request.Username, request.Password);
             if (user == null)
                 return null;
 
             // Update last login timestamp
-            await _userService.UpdateLastLoginAsync(user.Id);
+            await userService.UpdateLastLoginAsync(user.Id);
 
             // Extract tenant ID from header if available
             string? tenantId = null;

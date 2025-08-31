@@ -1,6 +1,8 @@
 using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.KnowledgeBase.Web.Server.Repositories;
 using EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.BaseClasses;
+using EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.Helpers;
+using EasyReasy.EnvironmentVariables;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Tests.Repositories
 {
@@ -19,22 +21,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Tests.Repositories
             _userRepository = new UserRepository(_connectionFactory);
         }
 
-        [ClassCleanup]
-        public static void ClassCleanup()
-        {
-            CleanupDatabaseTestEnvironment();
-        }
-
-        [TestInitialize]
-        public void TestInitialize()
-        {
-            SetupTestDatabase();
-        }
-
         [TestCleanup]
         public void TestCleanup()
         {
-            CleanupTestData();
+            // Clean up test data after each test
+            string connectionString = TestEnvironmentVariables.PostgresConnectionString.GetValue();
+            TestDatabaseMigrator.CleanupTable(connectionString, "user_role", _logger);
+            TestDatabaseMigrator.CleanupTable(connectionString, "\"user\"", _logger);
         }
 
         [TestMethod]
@@ -298,7 +291,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Tests.Repositories
             // Verify the update
             User? updatedUser = await _userRepository.GetByIdAsync(createdUser.Id);
             Assert.IsNotNull(updatedUser);
-            Assert.AreEqual(lastLoginAt, updatedUser.LastLoginAt);
+            Assert.IsNotNull(updatedUser.LastLoginAt);
+            // Compare with tolerance for potential precision differences in database storage
+            TimeSpan difference = lastLoginAt - updatedUser.LastLoginAt.Value;
+            Assert.IsTrue(Math.Abs(difference.TotalMilliseconds) < 100, 
+                $"DateTime difference too large: {difference.TotalMilliseconds}ms. Expected: {lastLoginAt}, Actual: {updatedUser.LastLoginAt}");
         }
 
         [TestMethod]
@@ -375,5 +372,375 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Tests.Repositories
             string passwordHash = "hashed_password_123";
             return await _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles);
         }
+
+        #region Input Validation Tests
+
+        [TestMethod]
+        public async Task CreateAsync_EmptyEmail_ThrowsArgumentException()
+        {
+            // Arrange
+            string email = "";
+            string passwordHash = "hashed_password_123";
+            string firstName = "John";
+            string lastName = "Doe";
+            List<string> roles = new List<string> { "user" };
+
+            // Act & Assert
+            await Assert.ThrowsExceptionAsync<ArgumentException>(
+                () => _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles));
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_NullEmail_ThrowsArgumentException()
+        {
+            // Arrange
+            string? email = null;
+            string passwordHash = "hashed_password_123";
+            string firstName = "John";
+            string lastName = "Doe";
+            List<string> roles = new List<string> { "user" };
+
+            // Act & Assert
+            await Assert.ThrowsExceptionAsync<ArgumentException>(
+                () => _userRepository.CreateAsync(email!, passwordHash, firstName, lastName, roles));
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_EmptyPasswordHash_ThrowsArgumentException()
+        {
+            // Arrange
+            string email = "test@example.com";
+            string passwordHash = "";
+            string firstName = "John";
+            string lastName = "Doe";
+            List<string> roles = new List<string> { "user" };
+
+            // Act & Assert
+            await Assert.ThrowsExceptionAsync<ArgumentException>(
+                () => _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles));
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_NullPasswordHash_ThrowsArgumentException()
+        {
+            // Arrange
+            string email = "test@example.com";
+            string? passwordHash = null;
+            string firstName = "John";
+            string lastName = "Doe";
+            List<string> roles = new List<string> { "user" };
+
+            // Act & Assert
+            await Assert.ThrowsExceptionAsync<ArgumentException>(
+                () => _userRepository.CreateAsync(email, passwordHash!, firstName, lastName, roles));
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_EmptyFirstName_ThrowsArgumentException()
+        {
+            // Arrange
+            string email = "test@example.com";
+            string passwordHash = "hashed_password_123";
+            string firstName = "";
+            string lastName = "Doe";
+            List<string> roles = new List<string> { "user" };
+
+            // Act & Assert
+            await Assert.ThrowsExceptionAsync<ArgumentException>(
+                () => _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles));
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_EmptyLastName_ThrowsArgumentException()
+        {
+            // Arrange
+            string email = "test@example.com";
+            string passwordHash = "hashed_password_123";
+            string firstName = "John";
+            string lastName = "";
+            List<string> roles = new List<string> { "user" };
+
+            // Act & Assert
+            await Assert.ThrowsExceptionAsync<ArgumentException>(
+                () => _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles));
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_NullRoles_ThrowsArgumentException()
+        {
+            // Arrange
+            string email = "test@example.com";
+            string passwordHash = "hashed_password_123";
+            string firstName = "John";
+            string lastName = "Doe";
+            List<string>? roles = null;
+
+            // Act & Assert
+            await Assert.ThrowsExceptionAsync<ArgumentException>(
+                () => _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles!));
+        }
+
+        #endregion
+
+        #region Duplicate Email Tests
+
+        [TestMethod]
+        public async Task CreateAsync_DuplicateEmail_ThrowsException()
+        {
+            // Arrange
+            string email = "duplicate@example.com";
+            string passwordHash = "hashed_password_123";
+            string firstName = "John";
+            string lastName = "Doe";
+            List<string> roles = new List<string> { "user" };
+
+            // Create first user
+            await _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles);
+
+            // Act & Assert - Try to create second user with same email
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+                () => _userRepository.CreateAsync(email, "different_hash", "Jane", "Smith", roles));
+        }
+
+        [TestMethod]
+        public async Task UpdateAsync_DuplicateEmail_ThrowsException()
+        {
+            // Arrange
+            User user1 = await CreateTestUser("user1@example.com", "John", "Doe", new List<string> { "user" });
+            User user2 = await CreateTestUser("user2@example.com", "Jane", "Smith", new List<string> { "user" });
+
+            // Update user2 to have the same email as user1
+            User updatedUser2 = new User(
+                user2.Id,
+                user1.Email, // Same email as user1
+                user2.PasswordHash,
+                user2.FirstName,
+                user2.LastName,
+                user2.IsActive,
+                user2.LastLoginAt,
+                user2.CreatedAt,
+                user2.UpdatedAt,
+                user2.Roles);
+
+            // Act & Assert
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(
+                () => _userRepository.UpdateAsync(updatedUser2));
+        }
+
+        #endregion
+
+        #region Edge Cases for Roles
+
+        [TestMethod]
+        public async Task CreateAsync_UserWithDuplicateRoles_HandlesCorrectly()
+        {
+            // Arrange
+            string email = "test@example.com";
+            string passwordHash = "hashed_password_123";
+            string firstName = "John";
+            string lastName = "Doe";
+            List<string> roles = new List<string> { "user", "user", "admin" }; // Duplicate "user"
+
+            // Act
+            User createdUser = await _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles);
+
+            // Assert
+            Assert.IsNotNull(createdUser);
+            Assert.AreEqual(2, createdUser.Roles.Count); // Should deduplicate
+            Assert.IsTrue(createdUser.Roles.Contains("user"));
+            Assert.IsTrue(createdUser.Roles.Contains("admin"));
+        }
+
+        [TestMethod]
+        public async Task UpdateAsync_UserWithDuplicateRoles_HandlesCorrectly()
+        {
+            // Arrange
+            User originalUser = await CreateTestUser();
+            List<string> duplicateRoles = new List<string> { "user", "user", "admin", "admin" };
+
+            User updatedUser = new User(
+                originalUser.Id,
+                originalUser.Email,
+                originalUser.PasswordHash,
+                originalUser.FirstName,
+                originalUser.LastName,
+                originalUser.IsActive,
+                originalUser.LastLoginAt,
+                originalUser.CreatedAt,
+                originalUser.UpdatedAt,
+                duplicateRoles);
+
+            // Act
+            User result = await _userRepository.UpdateAsync(updatedUser);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(2, result.Roles.Count); // Should deduplicate
+            Assert.IsTrue(result.Roles.Contains("user"));
+            Assert.IsTrue(result.Roles.Contains("admin"));
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_UserWithVeryLongRoleName_HandlesCorrectly()
+        {
+            // Arrange
+            string email = "test@example.com";
+            string passwordHash = "hashed_password_123";
+            string firstName = "John";
+            string lastName = "Doe";
+            string longRoleName = new string('a', 45); // 45 character role name (within 50 char limit)
+            List<string> roles = new List<string> { longRoleName };
+
+            // Act
+            User createdUser = await _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles);
+
+            // Assert
+            Assert.IsNotNull(createdUser);
+            Assert.AreEqual(1, createdUser.Roles.Count);
+            Assert.AreEqual(longRoleName, createdUser.Roles[0]);
+        }
+
+        #endregion
+
+        #region Data Integrity Tests
+
+        [TestMethod]
+        public async Task UpdateAsync_UserWithNullLastLoginAt_HandlesCorrectly()
+        {
+            // Arrange
+            User originalUser = await CreateTestUser();
+            User updatedUser = new User(
+                originalUser.Id,
+                originalUser.Email,
+                originalUser.PasswordHash,
+                originalUser.FirstName,
+                originalUser.LastName,
+                originalUser.IsActive,
+                null, // Set LastLoginAt to null
+                originalUser.CreatedAt,
+                originalUser.UpdatedAt,
+                originalUser.Roles);
+
+            // Act
+            User result = await _userRepository.UpdateAsync(updatedUser);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsNull(result.LastLoginAt);
+        }
+
+        [TestMethod]
+        public async Task UpdateAsync_UserWithFutureLastLoginAt_HandlesCorrectly()
+        {
+            // Arrange
+            User originalUser = await CreateTestUser();
+            DateTime futureDate = DateTime.UtcNow.AddDays(1);
+            User updatedUser = new User(
+                originalUser.Id,
+                originalUser.Email,
+                originalUser.PasswordHash,
+                originalUser.FirstName,
+                originalUser.LastName,
+                originalUser.IsActive,
+                futureDate,
+                originalUser.CreatedAt,
+                originalUser.UpdatedAt,
+                originalUser.Roles);
+
+            // Act
+            User result = await _userRepository.UpdateAsync(updatedUser);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(futureDate, result.LastLoginAt);
+        }
+
+        [TestMethod]
+        public async Task GetAllAsync_UsersWithMixedRoleScenarios_ReturnsCorrectData()
+        {
+            // Arrange
+            User userWithRoles = await CreateTestUser("user1@example.com", "User", "One", new List<string> { "user", "admin" });
+            User userWithoutRoles = await CreateTestUser("user2@example.com", "User", "Two", new List<string>());
+            User userWithSingleRole = await CreateTestUser("user3@example.com", "User", "Three", new List<string> { "moderator" });
+
+            // Act
+            List<User> allUsers = await _userRepository.GetAllAsync();
+
+            // Assert
+            Assert.IsNotNull(allUsers);
+            Assert.IsTrue(allUsers.Count >= 3);
+
+            User? foundUserWithRoles = allUsers.FirstOrDefault(u => u.Id == userWithRoles.Id);
+            User? foundUserWithoutRoles = allUsers.FirstOrDefault(u => u.Id == userWithoutRoles.Id);
+            User? foundUserWithSingleRole = allUsers.FirstOrDefault(u => u.Id == userWithSingleRole.Id);
+
+            Assert.IsNotNull(foundUserWithRoles);
+            Assert.AreEqual(2, foundUserWithRoles.Roles.Count);
+            Assert.IsTrue(foundUserWithRoles.Roles.Contains("user"));
+            Assert.IsTrue(foundUserWithRoles.Roles.Contains("admin"));
+
+            Assert.IsNotNull(foundUserWithoutRoles);
+            Assert.AreEqual(0, foundUserWithoutRoles.Roles.Count);
+
+            Assert.IsNotNull(foundUserWithSingleRole);
+            Assert.AreEqual(1, foundUserWithSingleRole.Roles.Count);
+            Assert.IsTrue(foundUserWithSingleRole.Roles.Contains("moderator"));
+        }
+
+        [TestMethod]
+        public async Task CreateAsync_UserWithSpecialCharacters_HandlesCorrectly()
+        {
+            // Arrange
+            string email = "test+special@example.com";
+            string passwordHash = "hashed_password_123";
+            string firstName = "José";
+            string lastName = "O'Connor-Smith";
+            List<string> roles = new List<string> { "user", "admin" };
+
+            // Act
+            User createdUser = await _userRepository.CreateAsync(email, passwordHash, firstName, lastName, roles);
+
+            // Assert
+            Assert.IsNotNull(createdUser);
+            Assert.AreEqual(email, createdUser.Email);
+            Assert.AreEqual(firstName, createdUser.FirstName);
+            Assert.AreEqual(lastName, createdUser.LastName);
+            Assert.AreEqual(2, createdUser.Roles.Count);
+        }
+
+        [TestMethod]
+        public async Task UpdateAsync_UserWithMaximumLengthFields_HandlesCorrectly()
+        {
+            // Arrange
+            User originalUser = await CreateTestUser();
+            string longEmail = "very.long.email.address.that.might.be.close.to.maximum.length@very.long.domain.name.com";
+            string longFirstName = new string('a', 50);
+            string longLastName = new string('b', 50);
+            string longPasswordHash = new string('c', 255);
+
+            User updatedUser = new User(
+                originalUser.Id,
+                longEmail,
+                longPasswordHash,
+                longFirstName,
+                longLastName,
+                originalUser.IsActive,
+                originalUser.LastLoginAt,
+                originalUser.CreatedAt,
+                originalUser.UpdatedAt,
+                originalUser.Roles);
+
+            // Act
+            User result = await _userRepository.UpdateAsync(updatedUser);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(longEmail, result.Email);
+            Assert.AreEqual(longFirstName, result.FirstName);
+            Assert.AreEqual(longLastName, result.LastName);
+            Assert.AreEqual(longPasswordHash, result.PasswordHash);
+        }
+
+        #endregion
     }
 }

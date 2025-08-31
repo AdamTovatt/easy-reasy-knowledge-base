@@ -1315,6 +1315,7 @@ html {
 /* Fade out animation for healthy notifications */
 .service-health-notification.fade-out {
     opacity: 0;
+    transition: opacity 0.5s ease-out;
 }
 
 /* Mobile responsive adjustments for service health */

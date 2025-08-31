@@ -32,6 +32,25 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>The created user with populated ID and timestamps.</returns>
         public async Task<User> CreateAsync(string email, string passwordHash, string firstName, string lastName, List<string> roles)
         {
+            // Input validation
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("Email cannot be null, empty, or whitespace.", nameof(email));
+            
+            if (string.IsNullOrWhiteSpace(passwordHash))
+                throw new ArgumentException("Password hash cannot be null, empty, or whitespace.", nameof(passwordHash));
+            
+            if (string.IsNullOrWhiteSpace(firstName))
+                throw new ArgumentException("First name cannot be null, empty, or whitespace.", nameof(firstName));
+            
+            if (string.IsNullOrWhiteSpace(lastName))
+                throw new ArgumentException("Last name cannot be null, empty, or whitespace.", nameof(lastName));
+            
+            if (roles == null)
+                throw new ArgumentException("Roles cannot be null.", nameof(roles));
+
+            // Deduplicate roles to avoid database constraint violations
+            List<string> uniqueRoles = roles.Distinct().ToList();
+
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -41,7 +60,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     {
                         // Insert user
                         string insertUserSql = @"
-                            INSERT INTO user (email, password_hash, first_name, last_name)
+                            INSERT INTO ""user"" (email, password_hash, first_name, last_name)
                             VALUES (@email, @passwordHash, @firstName, @lastName)
                             RETURNING id, email, password_hash, first_name, last_name, is_active, last_login_at, created_at, updated_at";
 
@@ -74,7 +93,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         }
 
                         // Insert roles
-                        if (roles.Count > 0)
+                        if (uniqueRoles.Count > 0)
                         {
                             string insertRolesSql = @"
                                 INSERT INTO user_role (user_id, role_name)
@@ -83,8 +102,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             using (NpgsqlCommand rolesCommand = new NpgsqlCommand(insertRolesSql, npgsqlConnection, transaction))
                             {
                                 rolesCommand.Parameters.AddWithValue("@userId", userId);
+                                rolesCommand.Parameters.AddWithValue("@roleName", "");
 
-                                foreach (string role in roles)
+                                foreach (string role in uniqueRoles)
                                 {
                                     rolesCommand.Parameters["@roleName"].Value = role;
                                     await rolesCommand.ExecuteNonQueryAsync();
@@ -104,7 +124,37 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             lastLoginAt,
                             createdAt,
                             updatedAt,
-                            roles);
+                            uniqueRoles);
+                    }
+                    catch (PostgresException ex)
+                    {
+                        await transaction.RollbackAsync();
+                        
+                        // Handle specific PostgreSQL constraint violations
+                        switch (ex.SqlState)
+                        {
+                            case "23505": // unique_violation
+                                if (ex.ConstraintName?.Contains("user_email") == true || ex.Message.Contains("email"))
+                                {
+                                    throw new InvalidOperationException("A user with this email address already exists.", ex);
+                                }
+                                else if (ex.ConstraintName?.Contains("user_role") == true || ex.Message.Contains("role"))
+                                {
+                                    throw new InvalidOperationException("Duplicate roles are not allowed for the same user.", ex);
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException("A unique constraint violation occurred.", ex);
+                                }
+                            case "23502": // not_null_violation
+                                throw new InvalidOperationException("A required field is missing.", ex);
+                            case "23503": // foreign_key_violation
+                                throw new InvalidOperationException("A foreign key constraint violation occurred.", ex);
+                            case "22001": // string_data_right_truncation
+                                throw new InvalidOperationException("One or more fields exceed the maximum allowed length.", ex);
+                            default:
+                                throw new InvalidOperationException($"Database error: {ex.Message}", ex);
+                        }
                     }
                     catch
                     {
@@ -148,6 +198,20 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>The updated user.</returns>
         public async Task<User> UpdateAsync(User user)
         {
+            // Deduplicate roles to avoid database constraint violations
+            List<string> uniqueRoles = user.Roles.Distinct().ToList();
+            User userWithUniqueRoles = new User(
+                user.Id,
+                user.Email,
+                user.PasswordHash,
+                user.FirstName,
+                user.LastName,
+                user.IsActive,
+                user.LastLoginAt,
+                user.CreatedAt,
+                user.UpdatedAt,
+                uniqueRoles);
+
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -157,7 +221,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     {
                         // Update user
                         string updateUserSql = @"
-                            UPDATE user 
+                            UPDATE ""user"" 
                             SET email = @email, password_hash = @passwordHash, first_name = @firstName, 
                                 last_name = @lastName, is_active = @isActive, last_login_at = @lastLoginAt
                             WHERE id = @id
@@ -167,19 +231,19 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                         using (NpgsqlCommand userCommand = new NpgsqlCommand(updateUserSql, npgsqlConnection, transaction))
                         {
-                            userCommand.Parameters.AddWithValue("@id", user.Id);
-                            userCommand.Parameters.AddWithValue("@email", user.Email);
-                            userCommand.Parameters.AddWithValue("@passwordHash", user.PasswordHash);
-                            userCommand.Parameters.AddWithValue("@firstName", user.FirstName);
-                            userCommand.Parameters.AddWithValue("@lastName", user.LastName);
-                            userCommand.Parameters.AddWithValue("@isActive", user.IsActive);
-                            userCommand.Parameters.AddWithValue("@lastLoginAt", (object?)user.LastLoginAt ?? DBNull.Value);
+                            userCommand.Parameters.AddWithValue("@id", userWithUniqueRoles.Id);
+                            userCommand.Parameters.AddWithValue("@email", userWithUniqueRoles.Email);
+                            userCommand.Parameters.AddWithValue("@passwordHash", userWithUniqueRoles.PasswordHash);
+                            userCommand.Parameters.AddWithValue("@firstName", userWithUniqueRoles.FirstName);
+                            userCommand.Parameters.AddWithValue("@lastName", userWithUniqueRoles.LastName);
+                            userCommand.Parameters.AddWithValue("@isActive", userWithUniqueRoles.IsActive);
+                            userCommand.Parameters.AddWithValue("@lastLoginAt", (object?)userWithUniqueRoles.LastLoginAt ?? DBNull.Value);
 
                             using (NpgsqlDataReader userReader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
                             {
                                 if (!await userReader.ReadAsync())
                                 {
-                                    throw new InvalidOperationException($"User with ID {user.Id} not found");
+                                    throw new InvalidOperationException($"User with ID {userWithUniqueRoles.Id} not found");
                                 }
 
                                 updatedAt = userReader.GetDateTime(userReader.GetOrdinal("updated_at"));
@@ -193,12 +257,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                         using (NpgsqlCommand deleteRolesCommand = new NpgsqlCommand(deleteRolesSql, npgsqlConnection, transaction))
                         {
-                            deleteRolesCommand.Parameters.AddWithValue("@userId", user.Id);
+                            deleteRolesCommand.Parameters.AddWithValue("@userId", userWithUniqueRoles.Id);
                             await deleteRolesCommand.ExecuteNonQueryAsync();
                         }
 
                         // Insert new roles
-                        if (user.Roles.Count > 0)
+                        if (userWithUniqueRoles.Roles.Count > 0)
                         {
                             string insertRolesSql = @"
                                 INSERT INTO user_role (user_id, role_name)
@@ -206,9 +270,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                             using (NpgsqlCommand rolesCommand = new NpgsqlCommand(insertRolesSql, npgsqlConnection, transaction))
                             {
-                                rolesCommand.Parameters.AddWithValue("@userId", user.Id);
+                                rolesCommand.Parameters.AddWithValue("@userId", userWithUniqueRoles.Id);
+                                rolesCommand.Parameters.AddWithValue("@roleName", "");
 
-                                foreach (string role in user.Roles)
+                                foreach (string role in userWithUniqueRoles.Roles)
                                 {
                                     rolesCommand.Parameters["@roleName"].Value = role;
                                     await rolesCommand.ExecuteNonQueryAsync();
@@ -220,16 +285,46 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                         // Return updated user with new updated_at timestamp
                         return new User(
-                            user.Id,
-                            user.Email,
-                            user.PasswordHash,
-                            user.FirstName,
-                            user.LastName,
-                            user.IsActive,
-                            user.LastLoginAt,
-                            user.CreatedAt,
+                            userWithUniqueRoles.Id,
+                            userWithUniqueRoles.Email,
+                            userWithUniqueRoles.PasswordHash,
+                            userWithUniqueRoles.FirstName,
+                            userWithUniqueRoles.LastName,
+                            userWithUniqueRoles.IsActive,
+                            userWithUniqueRoles.LastLoginAt,
+                            userWithUniqueRoles.CreatedAt,
                             updatedAt,
-                            user.Roles);
+                            userWithUniqueRoles.Roles);
+                    }
+                    catch (PostgresException ex)
+                    {
+                        await transaction.RollbackAsync();
+                        
+                        // Handle specific PostgreSQL constraint violations
+                        switch (ex.SqlState)
+                        {
+                            case "23505": // unique_violation
+                                if (ex.ConstraintName?.Contains("user_email") == true || ex.Message.Contains("email"))
+                                {
+                                    throw new InvalidOperationException("A user with this email address already exists.", ex);
+                                }
+                                else if (ex.ConstraintName?.Contains("user_role") == true || ex.Message.Contains("role"))
+                                {
+                                    throw new InvalidOperationException("Duplicate roles are not allowed for the same user.", ex);
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException("A unique constraint violation occurred.", ex);
+                                }
+                            case "23502": // not_null_violation
+                                throw new InvalidOperationException("A required field is missing.", ex);
+                            case "23503": // foreign_key_violation
+                                throw new InvalidOperationException("A foreign key constraint violation occurred.", ex);
+                            case "22001": // string_data_right_truncation
+                                throw new InvalidOperationException("One or more fields exceed the maximum allowed length.", ex);
+                            default:
+                                throw new InvalidOperationException($"Database error: {ex.Message}", ex);
+                        }
                     }
                     catch
                     {
@@ -267,7 +362,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                         // Delete user
                         string deleteUserSql = @"
-                            DELETE FROM user 
+                            DELETE FROM ""user"" 
                             WHERE id = @id";
 
                         using (NpgsqlCommand deleteUserCommand = new NpgsqlCommand(deleteUserSql, npgsqlConnection, transaction))
@@ -284,6 +379,23 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                         await transaction.CommitAsync();
                         return true;
+                    }
+                    catch (PostgresException ex)
+                    {
+                        await transaction.RollbackAsync();
+                        
+                        // Handle specific PostgreSQL constraint violations
+                        switch (ex.SqlState)
+                        {
+                            case "23503": // foreign_key_violation
+                                throw new InvalidOperationException("Cannot delete user due to existing references.", ex);
+                            case "23502": // not_null_violation
+                                throw new InvalidOperationException("A required field is missing.", ex);
+                            case "22001": // string_data_right_truncation
+                                throw new InvalidOperationException("One or more fields exceed the maximum allowed length.", ex);
+                            default:
+                                throw new InvalidOperationException($"Database error: {ex.Message}", ex);
+                        }
                     }
                     catch
                     {
@@ -304,47 +416,55 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             {
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 string getAllUsersSql = @"
-                    SELECT id, email, password_hash, first_name, last_name, is_active, last_login_at, created_at, updated_at
-                    FROM user
-                    ORDER BY created_at DESC";
+                    SELECT u.id, u.email, u.password_hash, u.first_name, u.last_name, u.is_active, u.last_login_at, u.created_at, u.updated_at, ur.role_name
+                    FROM ""user"" u
+                    LEFT JOIN user_role ur ON u.id = ur.user_id
+                    ORDER BY u.created_at DESC";
 
-                List<User> users = new List<User>();
+                Dictionary<Guid, User> userDict = new Dictionary<Guid, User>();
 
                 using (NpgsqlCommand userCommand = new NpgsqlCommand(getAllUsersSql, npgsqlConnection))
                 {
-                    using (NpgsqlDataReader userReader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
+                    using (NpgsqlDataReader reader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
                     {
-                        while (await userReader.ReadAsync())
+                        while (await reader.ReadAsync())
                         {
-                            Guid id = userReader.GetGuid(userReader.GetOrdinal("id"));
-                            string email = userReader.GetString(userReader.GetOrdinal("email"));
-                            string passwordHash = userReader.GetString(userReader.GetOrdinal("password_hash"));
-                            string firstName = userReader.GetString(userReader.GetOrdinal("first_name"));
-                            string lastName = userReader.GetString(userReader.GetOrdinal("last_name"));
-                            bool isActive = userReader.GetBoolean(userReader.GetOrdinal("is_active"));
-                            DateTime? lastLoginAt = userReader.IsDBNull(userReader.GetOrdinal("last_login_at")) ? null : userReader.GetDateTime(userReader.GetOrdinal("last_login_at"));
-                            DateTime createdAt = userReader.GetDateTime(userReader.GetOrdinal("created_at"));
-                            DateTime updatedAt = userReader.GetDateTime(userReader.GetOrdinal("updated_at"));
+                            Guid id = reader.GetGuid(reader.GetOrdinal("id"));
+                            string email = reader.GetString(reader.GetOrdinal("email"));
+                            string passwordHash = reader.GetString(reader.GetOrdinal("password_hash"));
+                            string firstName = reader.GetString(reader.GetOrdinal("first_name"));
+                            string lastName = reader.GetString(reader.GetOrdinal("last_name"));
+                            bool isActive = reader.GetBoolean(reader.GetOrdinal("is_active"));
+                            DateTime? lastLoginAt = reader.IsDBNull(reader.GetOrdinal("last_login_at")) ? null : reader.GetDateTime(reader.GetOrdinal("last_login_at"));
+                            DateTime createdAt = reader.GetDateTime(reader.GetOrdinal("created_at"));
+                            DateTime updatedAt = reader.GetDateTime(reader.GetOrdinal("updated_at"));
 
-                            // Get user roles
-                            List<string> roles = await GetUserRolesAsync(id, connection);
+                            if (!userDict.ContainsKey(id))
+                            {
+                                userDict[id] = new User(
+                                    id,
+                                    email,
+                                    passwordHash,
+                                    firstName,
+                                    lastName,
+                                    isActive,
+                                    lastLoginAt,
+                                    createdAt,
+                                    updatedAt,
+                                    new List<string>());
+                            }
 
-                            users.Add(new User(
-                                id,
-                                email,
-                                passwordHash,
-                                firstName,
-                                lastName,
-                                isActive,
-                                lastLoginAt,
-                                createdAt,
-                                updatedAt,
-                                roles));
+                            // Add role if it exists (role_name will be null for users without roles)
+                            if (!reader.IsDBNull(reader.GetOrdinal("role_name")))
+                            {
+                                string roleName = reader.GetString(reader.GetOrdinal("role_name"));
+                                userDict[id].Roles.Add(roleName);
+                            }
                         }
                     }
                 }
 
-                return users;
+                return userDict.Values.ToList();
             }
         }
 
@@ -360,7 +480,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 string existsSql = @"
                     SELECT COUNT(1)
-                    FROM user
+                    FROM ""user""
                     WHERE email = @email";
 
                 using (NpgsqlCommand existsCommand = new NpgsqlCommand(existsSql, npgsqlConnection))
@@ -385,7 +505,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             {
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 string updateLastLoginSql = @"
-                    UPDATE user 
+                    UPDATE ""user"" 
                     SET last_login_at = @lastLoginAt
                     WHERE id = @id";
 
@@ -423,46 +543,60 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         private async Task<User?> GetUserByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getUserSql = $@"
-                SELECT id, email, password_hash, first_name, last_name, is_active, last_login_at, created_at, updated_at
-                FROM user
-                WHERE {parameterName} = @{parameterName}";
+                SELECT u.id, u.email, u.password_hash, u.first_name, u.last_name, u.is_active, u.last_login_at, u.created_at, u.updated_at, ur.role_name
+                FROM ""user"" u
+                LEFT JOIN user_role ur ON u.id = ur.user_id
+                WHERE u.{parameterName} = @{parameterName}";
 
-            Guid id;
-            string email;
-            string passwordHash;
-            string firstName;
-            string lastName;
-            bool isActive;
-            DateTime? lastLoginAt;
-            DateTime createdAt;
-            DateTime updatedAt;
+            Guid id = Guid.Empty;
+            string email = string.Empty;
+            string passwordHash = string.Empty;
+            string firstName = string.Empty;
+            string lastName = string.Empty;
+            bool isActive = false;
+            DateTime? lastLoginAt = null;
+            DateTime createdAt = DateTime.MinValue;
+            DateTime updatedAt = DateTime.MinValue;
+            List<string> roles = new List<string>();
 
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
             using (NpgsqlCommand userCommand = new NpgsqlCommand(getUserSql, npgsqlConnection))
             {
                 userCommand.Parameters.AddWithValue($"@{parameterName}", (object?)parameterValue ?? DBNull.Value);
 
-                using (NpgsqlDataReader userReader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
+                using (NpgsqlDataReader reader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
                 {
-                    if (!await userReader.ReadAsync())
+                    bool hasUser = false;
+                    while (await reader.ReadAsync())
+                    {
+                        if (!hasUser)
+                        {
+                            id = reader.GetGuid(reader.GetOrdinal("id"));
+                            email = reader.GetString(reader.GetOrdinal("email"));
+                            passwordHash = reader.GetString(reader.GetOrdinal("password_hash"));
+                            firstName = reader.GetString(reader.GetOrdinal("first_name"));
+                            lastName = reader.GetString(reader.GetOrdinal("last_name"));
+                            isActive = reader.GetBoolean(reader.GetOrdinal("is_active"));
+                            lastLoginAt = reader.IsDBNull(reader.GetOrdinal("last_login_at")) ? null : reader.GetDateTime(reader.GetOrdinal("last_login_at"));
+                            createdAt = reader.GetDateTime(reader.GetOrdinal("created_at"));
+                            updatedAt = reader.GetDateTime(reader.GetOrdinal("updated_at"));
+                            hasUser = true;
+                        }
+
+                        // Add role if it exists (role_name will be null for users without roles)
+                        if (!reader.IsDBNull(reader.GetOrdinal("role_name")))
+                        {
+                            string roleName = reader.GetString(reader.GetOrdinal("role_name"));
+                            roles.Add(roleName);
+                        }
+                    }
+
+                    if (!hasUser)
                     {
                         return null;
                     }
-
-                    id = userReader.GetGuid(userReader.GetOrdinal("id"));
-                    email = userReader.GetString(userReader.GetOrdinal("email"));
-                    passwordHash = userReader.GetString(userReader.GetOrdinal("password_hash"));
-                    firstName = userReader.GetString(userReader.GetOrdinal("first_name"));
-                    lastName = userReader.GetString(userReader.GetOrdinal("last_name"));
-                    isActive = userReader.GetBoolean(userReader.GetOrdinal("is_active"));
-                    lastLoginAt = userReader.IsDBNull(userReader.GetOrdinal("last_login_at")) ? null : userReader.GetDateTime(userReader.GetOrdinal("last_login_at"));
-                    createdAt = userReader.GetDateTime(userReader.GetOrdinal("created_at"));
-                    updatedAt = userReader.GetDateTime(userReader.GetOrdinal("updated_at"));
                 }
             }
-
-            // Get user roles
-            List<string> roles = await GetUserRolesAsync(id, connection);
 
             return new User(
                 id,

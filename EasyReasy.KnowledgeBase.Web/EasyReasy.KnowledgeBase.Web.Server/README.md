@@ -4,15 +4,15 @@ This is the web server component of the EasyReasy Knowledge Base system, providi
 
 ## Authentication
 
-The server uses EasyReasy.Auth for JWT-based authentication. Username/password authentication is supported.
+The server uses EasyReasy.Auth for JWT-based authentication. Email/password authentication is supported.
 
-### Username/Password Authentication
+### Email/Password Authentication
 **Endpoint:** `POST /api/auth/login`
 
 **Request Body:**
 ```json
 {
-  "username": "your-username",
+  "username": "your-email@example.com",
   "password": "your-password"
 }
 ```
