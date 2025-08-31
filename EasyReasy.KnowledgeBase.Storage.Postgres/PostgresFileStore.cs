@@ -92,7 +92,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
 
             command.Parameters.AddWithValue("@Id", fileId);
 
-            long count = (long)await command.ExecuteScalarAsync();
+            long count = (long)(await command.ExecuteScalarAsync() ?? 0);
             return count > 0;
         }
 

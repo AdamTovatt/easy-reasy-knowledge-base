@@ -1,6 +1,7 @@
 using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
 using EasyReasy.KnowledgeBase.Web.Server.Models;
+using EasyReasy.KnowledgeBase.Web.Server.Services;
 using EasyReasy.Ollama.Client;
 using EasyReasy.Ollama.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -14,11 +15,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
     [Authorize]
     public class ChatController : ControllerBase
     {
-        private readonly OllamaClient _ollamaClient;
+        private readonly OllamaClientProvider _ollamaClientProvider;
 
-        public ChatController(OllamaClient ollamaClient)
+        public ChatController(OllamaClientProvider ollamaClientProvider)
         {
-            _ollamaClient = ollamaClient;
+            _ollamaClientProvider = ollamaClientProvider;
         }
 
         [HttpPost("stream")]
@@ -37,6 +38,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
             // Log user information (you can remove this in production)
             Console.WriteLine($"User {userId} from tenant {tenantId} with roles: {string.Join(", ", roles)}");
 
+            // Get the Ollama client from the provider
+            OllamaClient? ollamaClient = await _ollamaClientProvider.GetServiceAsync();
+            if (ollamaClient == null)
+            {
+                return StatusCode(503, new { error = "AI service is currently unavailable", details = _ollamaClientProvider.ErrorMessage });
+            }
+
             string modelName = EnvironmentVariable.OllamaSmallTextCompletionModelName.GetValue();
 
             Response.Headers.ContentType = "text/event-stream";
@@ -45,7 +53,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
 
             try
             {
-                await foreach (ChatResponsePart part in _ollamaClient.Chat.StreamChatAsync(modelName, request.Message, cancellationToken))
+                await foreach (ChatResponsePart part in ollamaClient.Chat.StreamChatAsync(modelName, request.Message, cancellationToken))
                 {
                     if (part.Message != null)
                     {

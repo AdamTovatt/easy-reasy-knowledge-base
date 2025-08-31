@@ -10,6 +10,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server
     {
         public static async Task Main(string[] args)
         {
+            await Task.CompletedTask;
+
             EnvironmentVariableHelper.ValidateVariableNamesIn(typeof(EnvironmentVariable));
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -42,12 +44,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server
             WebApplication app = builder.Build();
 
             // Run database migrations
-            string postgresConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING") ?? 
+            string postgresConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING") ??
                 "Host=localhost;Database=knowledgebasedb;Username=postgres;Password=password";
-            
+
             ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();
             bool migrationSuccess = DatabaseMigrator.RunMigrations(postgresConnectionString, logger);
-            
+
             if (!migrationSuccess)
             {
                 logger.LogError("Database migration failed. Application will exit.");
