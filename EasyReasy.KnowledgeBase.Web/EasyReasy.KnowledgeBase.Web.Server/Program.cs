@@ -1,11 +1,12 @@
 using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
-using EasyReasy.KnowledgeBase.Web.Server.Services;
 using EasyReasy.KnowledgeBase.Web.Server.Repositories;
 using EasyReasy.KnowledgeBase.Web.Server.Database;
 using EasyReasy.KnowledgeBase.Storage;
 using EasyReasy.Auth;
 using Microsoft.AspNetCore.Http.Json;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Auth;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Account;
 
 namespace EasyReasy.KnowledgeBase.Web.Server
 {
@@ -42,6 +43,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server
 
             // Register repositories
             builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+            // Register services
+            builder.Services.AddScoped<IUserService, UserService>();
 
             // Add services to the container.
             AiServiceConfigurator.ConfigureAllAiServices(builder.Services);

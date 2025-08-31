@@ -1,12 +1,12 @@
 using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
 using EasyReasy.KnowledgeBase.Web.Server.Models;
-using EasyReasy.KnowledgeBase.Web.Server.Services;
 using EasyReasy.Ollama.Client;
 using EasyReasy.Ollama.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EasyReasy.Auth;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Ai;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
 {

@@ -4,7 +4,7 @@ using EasyReasy.KnowledgeBase.Web.Server.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 
-namespace EasyReasy.KnowledgeBase.Web.Server.Services
+namespace EasyReasy.KnowledgeBase.Web.Server.Services.Ai
 {
     /// <summary>
     /// Provider for the Ollama client with error handling and lazy loading.

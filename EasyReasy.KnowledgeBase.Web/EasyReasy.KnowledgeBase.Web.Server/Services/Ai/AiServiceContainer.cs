@@ -1,4 +1,4 @@
-namespace EasyReasy.KnowledgeBase.Web.Server.Services
+namespace EasyReasy.KnowledgeBase.Web.Server.Services.Ai
 {
     /// <summary>
     /// Generic container for AI services with different model sizes.

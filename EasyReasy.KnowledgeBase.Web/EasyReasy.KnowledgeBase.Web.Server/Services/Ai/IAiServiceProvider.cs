@@ -1,4 +1,4 @@
-namespace EasyReasy.KnowledgeBase.Web.Server.Services
+namespace EasyReasy.KnowledgeBase.Web.Server.Services.Ai
 {
     /// <summary>
     /// Interface for AI service providers that handle lazy loading and error handling.

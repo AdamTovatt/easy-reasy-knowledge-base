@@ -3,7 +3,7 @@ using EasyReasy.KnowledgeBase.Generation;
 using EasyReasy.KnowledgeBase.OllamaGeneration;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
 
-namespace EasyReasy.KnowledgeBase.Web.Server.Services
+namespace EasyReasy.KnowledgeBase.Web.Server.Services.Ai
 {
     /// <summary>
     /// Provider for the embedding service with error handling and lazy loading.

@@ -1,5 +1,5 @@
 using EasyReasy.KnowledgeBase.Web.Server.Models;
-using EasyReasy.KnowledgeBase.Web.Server.Services;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Ai;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

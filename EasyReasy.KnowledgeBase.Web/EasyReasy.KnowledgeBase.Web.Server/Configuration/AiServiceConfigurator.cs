@@ -1,4 +1,4 @@
-using EasyReasy.KnowledgeBase.Web.Server.Services;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Ai;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
 {

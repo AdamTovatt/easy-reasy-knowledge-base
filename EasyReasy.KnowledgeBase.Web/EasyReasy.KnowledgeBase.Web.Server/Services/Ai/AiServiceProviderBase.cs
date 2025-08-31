@@ -1,6 +1,6 @@
 using EasyReasy.KnowledgeBase.Web.Server.Models;
 
-namespace EasyReasy.KnowledgeBase.Web.Server.Services
+namespace EasyReasy.KnowledgeBase.Web.Server.Services.Ai
 {
     /// <summary>
     /// Base class for AI service providers that handles common functionality like error handling, logging, and lazy loading.
