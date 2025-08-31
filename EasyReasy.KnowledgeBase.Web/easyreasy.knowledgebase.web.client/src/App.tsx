@@ -1,23 +1,49 @@
 import { useState, useEffect } from 'react';
 import Chat from './Chat';
 import Login from './Login';
+import KnowledgeBase from './KnowledgeBase';
 import { authUtils } from './utils/auth';
 import './App.css';
+
+type AppPage = 'chat' | 'knowledgeBase';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState<AppPage>('chat');
+
+    // Get current page from URL
+    const getCurrentPageFromUrl = (): AppPage => {
+        const path = window.location.pathname;
+        if (path === '/knowledge-base' || path === '/knowledgebase') {
+            return 'knowledgeBase';
+        }
+        return 'chat';
+    };
 
     useEffect(() => {
-        // Check if user is authenticated on app load
+        // Check if user is authenticated on app load and set current page from URL
         const checkAuth = () => {
             const isValid = authUtils.isTokenValid();
             setIsAuthenticated(isValid);
+            if (isValid) {
+                setCurrentPage(getCurrentPageFromUrl());
+            }
             setIsLoading(false);
         };
 
         checkAuth();
-    }, []);
+
+        // Listen for browser back/forward navigation
+        const handlePopState = () => {
+            if (isAuthenticated) {
+                setCurrentPage(getCurrentPageFromUrl());
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [isAuthenticated]);
 
     const handleLogin = (token: string, expiresAt: string) => {
         authUtils.saveToken(token, expiresAt);
@@ -27,6 +53,18 @@ function App() {
     const handleLogout = () => {
         authUtils.clearToken();
         setIsAuthenticated(false);
+        setCurrentPage('chat');
+        window.history.pushState({}, '', '/');
+    };
+
+    const navigateToChat = () => {
+        setCurrentPage('chat');
+        window.history.pushState({}, '', '/');
+    };
+
+    const navigateToKnowledgeBase = () => {
+        setCurrentPage('knowledgeBase');
+        window.history.pushState({}, '', '/knowledge-base');
     };
 
     if (isLoading) {
@@ -43,7 +81,17 @@ function App() {
     return (
         <div className="app">
             {isAuthenticated ? (
-                <Chat onLogout={handleLogout} />
+                currentPage === 'chat' ? (
+                    <Chat 
+                        onLogout={handleLogout} 
+                        onNavigateToKnowledgeBase={navigateToKnowledgeBase} 
+                    />
+                ) : (
+                    <KnowledgeBase 
+                        onLogout={handleLogout} 
+                        onNavigateToChat={navigateToChat} 
+                    />
+                )
             ) : (
                 <Login onLogin={handleLogin} />
             )}

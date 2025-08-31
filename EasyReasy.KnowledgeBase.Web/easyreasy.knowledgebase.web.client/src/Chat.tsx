@@ -48,7 +48,12 @@ interface StreamChatResponse {
     error?: string;
 }
 
-function Chat({ onLogout }: { onLogout: () => void }) {
+interface ChatProps {
+    onLogout: () => void;
+    onNavigateToKnowledgeBase: () => void;
+}
+
+function Chat({ onLogout, onNavigateToKnowledgeBase }: ChatProps) {
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [chatHistory, setChatHistory] = useState<string[]>([]);
@@ -287,7 +292,7 @@ function Chat({ onLogout }: { onLogout: () => void }) {
                               </span>
                               {!isSidebarCollapsed && <span>New chat</span>}
                           </div>
-                          <div className="nav-item">
+                          <div className="nav-item" onClick={onNavigateToKnowledgeBase}>
                               <span className="nav-icon">
                                   <BookOpen size={18} />
                               </span>

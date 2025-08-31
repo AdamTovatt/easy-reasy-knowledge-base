@@ -64,6 +64,14 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
                     }
                 }
             }
+            catch (HttpRequestException httpException)
+            {
+                // Service became unavailable during streaming - refresh provider status
+                await _ollamaClientProvider.RefreshAsync();
+                
+                // Return the same 503 response as if the service was unavailable from the start
+                return StatusCode(503, new { error = "AI service is currently unavailable", details = httpException.Message });
+            }
             catch (Exception exception)
             {
                 StreamChatResponse errorResponse = StreamChatResponse.CreateError(exception.Message);

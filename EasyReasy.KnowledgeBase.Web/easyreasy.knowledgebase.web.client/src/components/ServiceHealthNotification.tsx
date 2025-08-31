@@ -30,6 +30,8 @@ export function ServiceHealthNotification({
     const [showHealthyInitial, setShowHealthyInitial] = useState(true);
     // State to control fade animation
     const [isFadingOut, setIsFadingOut] = useState(false);
+    // State to track if current refresh is manual
+    const [isManualRefresh, setIsManualRefresh] = useState(false);
 
     // Memoize the callback to prevent infinite loops
     const memoizedOnHealthChange = useCallback((healthData: ServiceHealthResponse) => {
@@ -44,6 +46,19 @@ export function ServiceHealthNotification({
         onHealthChange: memoizedOnHealthChange,
         onLogout,
     });
+
+    // Custom refresh function that tracks manual refresh state
+    const handleManualRefresh = useCallback(async () => {
+        setIsManualRefresh(true);
+        await refresh();
+    }, [refresh]);
+
+    // Reset manual refresh flag when loading completes
+    useEffect(() => {
+        if (!isLoading) {
+            setIsManualRefresh(false);
+        }
+    }, [isLoading]);
 
     // Update the display every second to show elapsed time
     useEffect(() => {
@@ -83,13 +98,25 @@ export function ServiceHealthNotification({
         }
     }, [health?.isHealthy, isLoading, isInitialLoad]);
 
-    // Reset states when health changes from healthy to unhealthy
+    // Reset states when health status changes
     useEffect(() => {
-        if (health && !health.isHealthy) {
-            setShowHealthyInitial(true);
-            setIsFadingOut(false);
+        if (health) {
+            if (!health.isHealthy) {
+                // When becoming unhealthy, reset states to show notification
+                setShowHealthyInitial(true);
+                setIsFadingOut(false);
+            } else if (!isInitialLoad && showOnlyWhenUnhealthy) {
+                // When becoming healthy (after initial load), start fade out if configured to hide when healthy
+                setIsFadingOut(true);
+                const fadeTimer = setTimeout(() => {
+                    setShowHealthyInitial(false);
+                    setIsFadingOut(false);
+                }, 500);
+                
+                return () => clearTimeout(fadeTimer);
+            }
         }
-    }, [health?.isHealthy]);
+    }, [health?.isHealthy, isInitialLoad, showOnlyWhenUnhealthy]);
 
     const toggleServiceExpansion = (serviceName: string) => {
         setExpandedServices(prev => {
@@ -108,8 +135,12 @@ export function ServiceHealthNotification({
         // Don't show anything if there's no health data yet
         if (!health) return false;
         
-        // Always show if loading
-        if (isLoading) return true;
+        // Show if loading only when:
+        // 1. It's a manual refresh, OR
+        // 2. The service is currently unhealthy (so user knows we're checking)
+        if (isLoading) {
+            return isManualRefresh || !health.isHealthy;
+        }
         
         // Always show if unhealthy
         if (!health.isHealthy) return true;
@@ -192,7 +223,7 @@ export function ServiceHealthNotification({
                 <div className="notification-actions">
                     <button
                         className="refresh-button"
-                        onClick={refresh}
+                        onClick={handleManualRefresh}
                         disabled={isLoading}
                         title="Refresh service health"
                     >
