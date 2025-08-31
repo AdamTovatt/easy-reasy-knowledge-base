@@ -15,6 +15,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services
         {
         }
 
+        /// <summary>
+        /// Gets the name of the service for health reporting.
+        /// </summary>
+        public override string ServiceName => "Ollama Client";
+
         protected override async Task<OllamaClient> CreateServiceAsync()
         {
             string baseUrl = EnvironmentVariable.OllamaServerUrls.GetAllValues().First();

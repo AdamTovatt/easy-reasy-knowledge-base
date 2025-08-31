@@ -44,7 +44,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server
             builder.Services.AddScoped<IUserRepository, UserRepository>();
 
             // Add services to the container.
-            await AiServiceConfigurator.ConfigureAllAiServicesAsync(builder.Services);
+            AiServiceConfigurator.ConfigureAllAiServices(builder.Services);
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -52,6 +52,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server
             builder.Services.AddSwaggerGen();
 
             WebApplication app = builder.Build();
+
+            // Preload AI services in background (this will capture error messages for health reporting)
+            _ = Task.Run(async () => await AiServiceConfigurator.PreloadAllAiServicesAsync(app.Services));
 
             // Run database migrations
             ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();

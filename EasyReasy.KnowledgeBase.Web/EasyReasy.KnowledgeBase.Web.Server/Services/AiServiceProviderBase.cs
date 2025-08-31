@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using EasyReasy.KnowledgeBase.Web.Server.Models;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Services
 {
@@ -6,7 +6,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services
     /// Base class for AI service providers that handles common functionality like error handling, logging, and lazy loading.
     /// </summary>
     /// <typeparam name="T">The type of AI service being provided.</typeparam>
-    public abstract class AiServiceProviderBase<T> : IAiServiceProvider<T> where T : class
+    public abstract class AiServiceProviderBase<T> : IAiServiceProvider<T>, IServiceHealthReport where T : class
     {
         private readonly ILogger _logger;
 
@@ -36,6 +36,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services
         public Exception? LastException { get; protected set; }
 
         /// <summary>
+        /// Gets the name of the service for health reporting.
+        /// </summary>
+        public abstract string ServiceName { get; }
+
+        /// <summary>
         /// Gets the service, attempting to create it if not already available.
         /// </summary>
         /// <returns>The service instance, or null if creation failed.</returns>
@@ -59,6 +64,21 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services
                 _logger.LogError(ex, "Failed to initialize AI service {ServiceType}: {Message}", typeof(T).Name, ex.Message);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Refreshes the health status by attempting to create/reconnect to the service.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous refresh operation.</returns>
+        public async Task RefreshAsync()
+        {
+            // Clear current service and error state
+            Service = null;
+            ErrorMessage = null;
+            LastException = null;
+
+            // Attempt to create the service again
+            await GetServiceAsync();
         }
 
         /// <summary>

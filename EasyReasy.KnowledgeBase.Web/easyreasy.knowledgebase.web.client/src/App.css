@@ -229,6 +229,7 @@ html {
     width: 100%;
     background: var(--color-bg);
     color: var(--color-fg);
+    overflow: hidden;
 }
 
 .chat-sidebar {
@@ -477,6 +478,7 @@ html {
     background-color: var(--color-bg);
     border: none;
     outline: none;
+    overflow: hidden;
 }
 
 .chat-header {
@@ -612,7 +614,9 @@ html {
     background: transparent;
     position: relative;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    overflow: visible;
 }
 
 .chat-input-container::before {
@@ -1080,5 +1084,286 @@ html {
     
     .login-logo h1 {
         font-size: 1.25rem;
+    }
+}
+
+/* Service Health Notification Styles */
+.service-health-notification {
+    background: var(--elevation-level-2-dark);
+    border: 1px solid var(--elevation-level-3-dark);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.service-health-notification.status-healthy {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.service-health-notification.status-unhealthy {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.service-health-notification.status-loading {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.status-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.status-healthy .status-icon {
+    color: #10b981;
+}
+
+.status-unhealthy .status-icon {
+    color: #ef4444;
+}
+
+.status-loading .status-icon {
+    color: #f59e0b;
+}
+
+.status-text {
+    color: var(--color-fg);
+    font-weight: 500;
+}
+
+.notification-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.refresh-button {
+    background: none;
+    border: none;
+    color: var(--color-fg);
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: opacity 0.2s, background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.refresh-button:hover:not(:disabled) {
+    opacity: 1;
+    background: var(--elevation-level-4-dark);
+}
+
+.refresh-button:disabled {
+    cursor: not-allowed;
+}
+
+.last-updated {
+    color: var(--color-fg);
+    opacity: 0.5;
+    font-size: 0.75rem;
+}
+
+.unhealthy-services {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--elevation-level-3-dark);
+}
+
+.services-header {
+    color: var(--color-fg);
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+}
+
+.services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.service-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: var(--elevation-level-3-dark);
+}
+
+.service-item.unhealthy {
+    border-left: 3px solid #ef4444;
+}
+
+.service-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.service-header:hover {
+    background-color: var(--elevation-level-4-dark);
+    border-radius: 4px;
+    margin: -2px;
+    padding: 2px;
+}
+
+.service-name {
+    color: var(--color-fg);
+    font-weight: 500;
+    font-size: 0.8rem;
+    flex: 1;
+}
+
+.expand-icon {
+    color: var(--color-fg);
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.service-header:hover .expand-icon {
+    opacity: 1;
+}
+
+.service-error-details {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--elevation-level-4-dark);
+    animation: fadeIn 0.2s ease-in;
+}
+
+.service-error {
+    color: #ef4444;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    line-height: 1.3;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.health-check-error {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
+    border-radius: 4px;
+}
+
+.error-text {
+    color: #ef4444;
+    font-size: 0.8rem;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Chat-specific health notification positioning */
+.chat-health-notification {
+    align-self: stretch;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.5s ease-out;
+}
+
+/* Fade out animation for healthy notifications */
+.service-health-notification.fade-out {
+    opacity: 0;
+}
+
+/* Mobile responsive adjustments for service health */
+@media (max-width: 768px) {
+    .service-health-notification {
+        margin: 4px;
+        padding: 8px 10px;
+    }
+    
+    .chat-health-notification {
+        margin-top: 60px; /* Add space to avoid overlap with hamburger menu */
+    }
+    
+
+    
+    .notification-header {
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .status-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .status-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .notification-actions {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .last-updated {
+        white-space: nowrap;
+    }
+    
+    .services-list {
+        gap: 4px;
+    }
+    
+    .service-item {
+        padding: 4px 6px;
     }
 }

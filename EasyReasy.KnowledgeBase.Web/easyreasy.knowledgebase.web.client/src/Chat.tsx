@@ -4,6 +4,7 @@ import { PuffLoader } from 'react-spinners';
 import ReactMarkdown from 'react-markdown';
 import EasyReasyIcon from './assets/icons/easy-reasy-icon-32.png';
 import { authUtils } from './utils/auth';
+import { ServiceHealthNotification } from './components/ServiceHealthNotification';
 
 const ErrorIcon = () => (
     <div style={{ 
@@ -136,7 +137,21 @@ function Chat({ onLogout }: { onLogout: () => void }) {
                     onLogout();
                     throw new Error('Session expired. Please log in again.');
                 } else {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    // Try to extract error message from response body
+                    let errorMessage = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            const errorData = JSON.parse(errorText);
+                            if (errorData.error) {
+                                errorMessage = errorData.error;
+                            }
+                        }
+                    } catch (parseError) {
+                        // If we can't parse the response or there's no error field, use the default message
+                        console.log('Could not parse error response:', parseError);
+                    }
+                    throw new Error(errorMessage);
                 }
             }
 
@@ -233,14 +248,14 @@ function Chat({ onLogout }: { onLogout: () => void }) {
     };
 
     return (
-                 <div className="chat-layout">
-             {/* Mobile Menu Button */}
-             <button 
-                 className={`mobile-menu-button mobile-only ${!isSidebarCollapsed ? 'hidden' : ''}`}
-                 onClick={toggleSidebar}
-             >
-                 <Menu size={24} />
-             </button>
+        <div className="chat-layout">
+            {/* Mobile Menu Button */}
+            <button 
+                className={`mobile-menu-button mobile-only ${!isSidebarCollapsed ? 'hidden' : ''}`}
+                onClick={toggleSidebar}
+            >
+                <Menu size={24} />
+            </button>
              
              {/* Left Sidebar */}
                                        <div className={`chat-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
@@ -264,34 +279,51 @@ function Chat({ onLogout }: { onLogout: () => void }) {
                      )}
                  </div>
                  
-                 <div className="sidebar-header">
-                     <div className="sidebar-nav">
-                         <div className="nav-item">
-                             <span className="nav-icon">
-                                 <MessageSquare size={18} />
-                             </span>
-                             {!isSidebarCollapsed && <span>New chat</span>}
-                         </div>
-                         <div className="nav-item">
-                             <span className="nav-icon">
-                                 <BookOpen size={18} />
-                             </span>
-                             {!isSidebarCollapsed && <span>Knowledge Base</span>}
-                         </div>
-                     </div>
-                 </div>
+                                   <div className="sidebar-header">
+                      <div className="sidebar-nav">
+                          <div className="nav-item">
+                              <span className="nav-icon">
+                                  <MessageSquare size={18} />
+                              </span>
+                              {!isSidebarCollapsed && <span>New chat</span>}
+                          </div>
+                          <div className="nav-item">
+                              <span className="nav-icon">
+                                  <BookOpen size={18} />
+                              </span>
+                              {!isSidebarCollapsed && <span>Knowledge Base</span>}
+                          </div>
+                      </div>
+                  </div>
+                  
+                  
                  
-                {!isSidebarCollapsed && (
-                    <div className="sidebar-content">
-                         <div className="today-section">
-                             <h3>Today</h3>
-                             <div className="chat-history-item">
-                                 <span>Checking GitHub repositories availab...</span>
-                                 <span className="dots">⋯</span>
-                             </div>
-                         </div>
-                     </div>
-                )}
+                                                                                      {!isSidebarCollapsed && (
+                       <div className="sidebar-content">
+                            <div className="today-section">
+                                <h3>Today</h3>
+                                <div className="chat-history-item">
+                                    <span>Checking GitHub repositories availab...</span>
+                                    <span className="dots">⋯</span>
+                                </div>
+                            </div>
+                        </div>
+                   )}
+                   
+                   {!isSidebarCollapsed && (
+                       <div className="sidebar-header">
+                           <div className="sidebar-nav">
+                               <div className="nav-item" onClick={handleLogout}>
+                                   <span className="nav-icon">
+                                       <LogOut size={18} />
+                                   </span>
+                                   <span>Logout</span>
+                               </div>
+                           </div>
+                       </div>
+                   )}
+                  
+                  
                  
                  {!isSidebarCollapsed && (
                      <div className="sidebar-footer">
@@ -302,16 +334,17 @@ function Chat({ onLogout }: { onLogout: () => void }) {
 
             {/* Main Chat Area */}
             <div className="chat-main">
-                <div className="chat-header">
-                    <div className="header-actions">
-                        <button className="header-icon" onClick={handleLogout} title="Logout">
-                            <LogOut size={18} />
-                        </button>
-                    </div>
-                </div>
-                
                 <div className="chat-messages" ref={chatContainerRef} onScroll={handleScroll}>
                     <div className="messages-container">
+                        {/* Service Health Notification */}
+                        <ServiceHealthNotification 
+                            showOnlyWhenUnhealthy={false}
+                            autoRefresh={true}
+                            refreshIntervalMs={30000}
+                            className="chat-health-notification"
+                            onLogout={onLogout}
+                        />
+                        
                         {chatHistory.map((message, index) => {
                             const isUserMessage = message.startsWith('You:');
                             const isErrorMessage = message.startsWith('Error:');

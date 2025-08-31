@@ -1,3 +1,4 @@
+using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.KnowledgeBase.Web.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,13 +8,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class AiHealthController : ControllerBase
+    public class ServiceHealthController : ControllerBase
     {
         private readonly EmbeddingServiceProvider _embeddingServiceProvider;
         private readonly OneShotServiceContainerProvider _oneShotServiceContainerProvider;
         private readonly OllamaClientProvider _ollamaClientProvider;
 
-        public AiHealthController(
+        public ServiceHealthController(
             EmbeddingServiceProvider embeddingServiceProvider,
             OneShotServiceContainerProvider oneShotServiceContainerProvider,
             OllamaClientProvider ollamaClientProvider)
@@ -24,28 +25,27 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetHealthStatus()
+        public async Task<IActionResult> GetHealthStatus([FromQuery] bool refresh = false)
         {
-            var healthStatus = new
+            List<IServiceHealthReport> services = new List<IServiceHealthReport>
             {
-                embeddingService = new
-                {
-                    isAvailable = _embeddingServiceProvider.IsAvailable,
-                    errorMessage = _embeddingServiceProvider.ErrorMessage
-                },
-                oneShotServiceContainer = new
-                {
-                    isAvailable = _oneShotServiceContainerProvider.IsAvailable,
-                    errorMessage = _oneShotServiceContainerProvider.ErrorMessage
-                },
-                ollamaClient = new
-                {
-                    isAvailable = _ollamaClientProvider.IsAvailable,
-                    errorMessage = _ollamaClientProvider.ErrorMessage
-                }
+                _embeddingServiceProvider,
+                _oneShotServiceContainerProvider,
+                _ollamaClientProvider,
             };
 
-            return Ok(healthStatus);
+            // Refresh services if requested
+            if (refresh)
+            {
+                // Start all refresh tasks concurrently
+                Task[] refreshTasks = services.Select(service => service.RefreshAsync()).ToArray();
+                
+                // Await all refresh tasks to complete
+                await Task.WhenAll(refreshTasks);
+            }
+
+            ServiceHealthResponse response = new ServiceHealthResponse(services);
+            return Ok(response);
         }
     }
 }

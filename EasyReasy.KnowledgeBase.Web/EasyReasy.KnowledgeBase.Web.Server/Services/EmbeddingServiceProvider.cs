@@ -2,8 +2,6 @@ using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Generation;
 using EasyReasy.KnowledgeBase.OllamaGeneration;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Linq;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Services
 {
@@ -15,6 +13,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services
         public EmbeddingServiceProvider(ILogger<EmbeddingServiceProvider> logger) : base(logger)
         {
         }
+
+        /// <summary>
+        /// Gets the name of the service for health reporting.
+        /// </summary>
+        public override string ServiceName => "Embedding Service";
 
         protected override async Task<IEmbeddingService> CreateServiceAsync()
         {
