@@ -1,6 +1,9 @@
 using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
 using EasyReasy.KnowledgeBase.Web.Server.Services;
+using EasyReasy.KnowledgeBase.Web.Server.Repositories;
+using EasyReasy.KnowledgeBase.Web.Server.Database;
+using EasyReasy.KnowledgeBase.Storage;
 using EasyReasy.Auth;
 using Microsoft.AspNetCore.Http.Json;
 
@@ -33,6 +36,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server
             // Register auth validation service
             builder.Services.AddSingleton<IAuthRequestValidationService, AuthService>();
 
+            // Register database connection factory
+            string postgresConnectionString = EnvironmentVariable.PostgresConnectionString.GetValue();
+            builder.Services.AddSingleton<IDbConnectionFactory>(new PostgresConnectionFactory(postgresConnectionString));
+
+            // Register repositories
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+
             // Add services to the container.
             await AiServiceConfigurator.ConfigureAllAiServicesAsync(builder.Services);
 
@@ -44,9 +54,6 @@ namespace EasyReasy.KnowledgeBase.Web.Server
             WebApplication app = builder.Build();
 
             // Run database migrations
-            string postgresConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING") ??
-                "Host=localhost;Database=knowledgebasedb;Username=postgres;Password=password";
-
             ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();
             bool migrationSuccess = DatabaseMigrator.RunMigrations(postgresConnectionString, logger);
 

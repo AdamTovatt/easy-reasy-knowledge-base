@@ -1,5 +1,7 @@
 using EasyReasy.KnowledgeBase.Web.Server.Models;
+using EasyReasy.KnowledgeBase.Storage;
 using Npgsql;
+using System.Data;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 {
@@ -8,15 +10,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
     /// </summary>
     public class UserRepository : IUserRepository
     {
-        private readonly string _connectionString;
+        private readonly IDbConnectionFactory _connectionFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserRepository"/> class.
         /// </summary>
-        /// <param name="connectionString">The PostgreSQL connection string.</param>
-        public UserRepository(string connectionString)
+        /// <param name="connectionFactory">The database connection factory.</param>
+        public UserRepository(IDbConnectionFactory connectionFactory)
         {
-            _connectionString = connectionString;
+            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
         /// <summary>
@@ -30,11 +32,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>The created user with populated ID and timestamps.</returns>
         public async Task<User> CreateAsync(string email, string passwordHash, string firstName, string lastName, List<string> roles)
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
-
-                using (NpgsqlTransaction transaction = (NpgsqlTransaction)await connection.BeginTransactionAsync())
+                NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
+                using (NpgsqlTransaction transaction = (NpgsqlTransaction)await npgsqlConnection.BeginTransactionAsync())
                 {
                     try
                     {
@@ -50,7 +51,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         bool isActive;
                         DateTime? lastLoginAt;
 
-                        using (NpgsqlCommand userCommand = new NpgsqlCommand(insertUserSql, connection, transaction))
+                        using (NpgsqlCommand userCommand = new NpgsqlCommand(insertUserSql, npgsqlConnection, transaction))
                         {
                             userCommand.Parameters.AddWithValue("@email", email);
                             userCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
@@ -79,7 +80,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 INSERT INTO user_role (user_id, role_name)
                                 VALUES (@userId, @roleName)";
 
-                            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(insertRolesSql, connection, transaction))
+                            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(insertRolesSql, npgsqlConnection, transaction))
                             {
                                 rolesCommand.Parameters.AddWithValue("@userId", userId);
 
@@ -121,9 +122,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>The user if found, null otherwise.</returns>
         public async Task<User?> GetByIdAsync(Guid id)
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
                 return await GetUserByParameterAsync("id", id, connection);
             }
         }
@@ -135,9 +135,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>The user if found, null otherwise.</returns>
         public async Task<User?> GetByEmailAsync(string email)
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
                 return await GetUserByParameterAsync("email", email, connection);
             }
         }
@@ -149,11 +148,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>The updated user.</returns>
         public async Task<User> UpdateAsync(User user)
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
-
-                using (NpgsqlTransaction transaction = (NpgsqlTransaction)await connection.BeginTransactionAsync())
+                NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
+                using (NpgsqlTransaction transaction = (NpgsqlTransaction)await npgsqlConnection.BeginTransactionAsync())
                 {
                     try
                     {
@@ -167,7 +165,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                         DateTime updatedAt;
 
-                        using (NpgsqlCommand userCommand = new NpgsqlCommand(updateUserSql, connection, transaction))
+                        using (NpgsqlCommand userCommand = new NpgsqlCommand(updateUserSql, npgsqlConnection, transaction))
                         {
                             userCommand.Parameters.AddWithValue("@id", user.Id);
                             userCommand.Parameters.AddWithValue("@email", user.Email);
@@ -193,7 +191,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             DELETE FROM user_role 
                             WHERE user_id = @userId";
 
-                        using (NpgsqlCommand deleteRolesCommand = new NpgsqlCommand(deleteRolesSql, connection, transaction))
+                        using (NpgsqlCommand deleteRolesCommand = new NpgsqlCommand(deleteRolesSql, npgsqlConnection, transaction))
                         {
                             deleteRolesCommand.Parameters.AddWithValue("@userId", user.Id);
                             await deleteRolesCommand.ExecuteNonQueryAsync();
@@ -206,7 +204,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 INSERT INTO user_role (user_id, role_name)
                                 VALUES (@userId, @roleName)";
 
-                            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(insertRolesSql, connection, transaction))
+                            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(insertRolesSql, npgsqlConnection, transaction))
                             {
                                 rolesCommand.Parameters.AddWithValue("@userId", user.Id);
 
@@ -249,11 +247,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>True if the user was deleted, false if not found.</returns>
         public async Task<bool> DeleteAsync(Guid id)
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
-
-                using (NpgsqlTransaction transaction = (NpgsqlTransaction)await connection.BeginTransactionAsync())
+                NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
+                using (NpgsqlTransaction transaction = (NpgsqlTransaction)await npgsqlConnection.BeginTransactionAsync())
                 {
                     try
                     {
@@ -262,7 +259,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             DELETE FROM user_role 
                             WHERE user_id = @userId";
 
-                        using (NpgsqlCommand deleteRolesCommand = new NpgsqlCommand(deleteRolesSql, connection, transaction))
+                        using (NpgsqlCommand deleteRolesCommand = new NpgsqlCommand(deleteRolesSql, npgsqlConnection, transaction))
                         {
                             deleteRolesCommand.Parameters.AddWithValue("@userId", id);
                             await deleteRolesCommand.ExecuteNonQueryAsync();
@@ -273,7 +270,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             DELETE FROM user 
                             WHERE id = @id";
 
-                        using (NpgsqlCommand deleteUserCommand = new NpgsqlCommand(deleteUserSql, connection, transaction))
+                        using (NpgsqlCommand deleteUserCommand = new NpgsqlCommand(deleteUserSql, npgsqlConnection, transaction))
                         {
                             deleteUserCommand.Parameters.AddWithValue("@id", id);
                             int rowsAffected = await deleteUserCommand.ExecuteNonQueryAsync();
@@ -303,10 +300,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>A list of all users.</returns>
         public async Task<List<User>> GetAllAsync()
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
-
+                NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 string getAllUsersSql = @"
                     SELECT id, email, password_hash, first_name, last_name, is_active, last_login_at, created_at, updated_at
                     FROM user
@@ -314,7 +310,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                 List<User> users = new List<User>();
 
-                using (NpgsqlCommand userCommand = new NpgsqlCommand(getAllUsersSql, connection))
+                using (NpgsqlCommand userCommand = new NpgsqlCommand(getAllUsersSql, npgsqlConnection))
                 {
                     using (NpgsqlDataReader userReader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
                     {
@@ -359,16 +355,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>True if a user with the email exists, false otherwise.</returns>
         public async Task<bool> ExistsByEmailAsync(string email)
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
-
+                NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 string existsSql = @"
                     SELECT COUNT(1)
                     FROM user
                     WHERE email = @email";
 
-                using (NpgsqlCommand existsCommand = new NpgsqlCommand(existsSql, connection))
+                using (NpgsqlCommand existsCommand = new NpgsqlCommand(existsSql, npgsqlConnection))
                 {
                     existsCommand.Parameters.AddWithValue("@email", email);
                     object? result = await existsCommand.ExecuteScalarAsync();
@@ -386,16 +381,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>True if the update was successful, false if user not found.</returns>
         public async Task<bool> UpdateLastLoginAsync(Guid id, DateTime lastLoginAt)
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
-
+                NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 string updateLastLoginSql = @"
                     UPDATE user 
                     SET last_login_at = @lastLoginAt
                     WHERE id = @id";
 
-                using (NpgsqlCommand updateCommand = new NpgsqlCommand(updateLastLoginSql, connection))
+                using (NpgsqlCommand updateCommand = new NpgsqlCommand(updateLastLoginSql, npgsqlConnection))
                 {
                     updateCommand.Parameters.AddWithValue("@id", id);
                     updateCommand.Parameters.AddWithValue("@lastLoginAt", lastLoginAt);
@@ -412,9 +406,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <returns>A list of role names assigned to the user.</returns>
         public async Task<List<string>> GetUserRolesAsync(Guid userId)
         {
-            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                await connection.OpenAsync();
                 return await GetUserRolesAsync(userId, connection);
             }
         }
@@ -427,7 +420,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="parameterValue">The value of the parameter.</param>
         /// <param name="connection">The open database connection to use.</param>
         /// <returns>The user if found, null otherwise.</returns>
-        private async Task<User?> GetUserByParameterAsync<T>(string parameterName, T parameterValue, NpgsqlConnection connection)
+        private async Task<User?> GetUserByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getUserSql = $@"
                 SELECT id, email, password_hash, first_name, last_name, is_active, last_login_at, created_at, updated_at
@@ -444,7 +437,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             DateTime createdAt;
             DateTime updatedAt;
 
-            using (NpgsqlCommand userCommand = new NpgsqlCommand(getUserSql, connection))
+            NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
+            using (NpgsqlCommand userCommand = new NpgsqlCommand(getUserSql, npgsqlConnection))
             {
                 userCommand.Parameters.AddWithValue($"@{parameterName}", (object?)parameterValue ?? DBNull.Value);
 
@@ -489,7 +483,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="connection">The open database connection to use.</param>
         /// <returns>A list of role names assigned to the user.</returns>
-        private async Task<List<string>> GetUserRolesAsync(Guid userId, NpgsqlConnection connection)
+        private async Task<List<string>> GetUserRolesAsync(Guid userId, IDbConnection connection)
         {
             string getRolesSql = @"
                 SELECT role_name
@@ -497,7 +491,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 WHERE user_id = @userId";
 
             List<string> roles = new List<string>();
-            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(getRolesSql, connection))
+            NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
+            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(getRolesSql, npgsqlConnection))
             {
                 rolesCommand.Parameters.AddWithValue("@userId", userId);
 

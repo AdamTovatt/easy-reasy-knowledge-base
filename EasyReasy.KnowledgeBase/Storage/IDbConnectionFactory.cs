@@ -1,6 +1,6 @@
 using System.Data;
 
-namespace EasyReasy.KnowledgeBase.Storage.Postgres
+namespace EasyReasy.KnowledgeBase.Storage
 {
     /// <summary>
     /// Defines the contract for creating database connections.
