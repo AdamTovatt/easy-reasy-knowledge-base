@@ -247,18 +247,109 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// </summary>
         /// <param name="id">The unique identifier of the user to delete.</param>
         /// <returns>True if the user was deleted, false if not found.</returns>
-        public Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
-            throw new NotImplementedException();
+            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                using (NpgsqlTransaction transaction = (NpgsqlTransaction)await connection.BeginTransactionAsync())
+                {
+                    try
+                    {
+                        // Delete user roles first (due to foreign key constraint)
+                        string deleteRolesSql = @"
+                            DELETE FROM user_role 
+                            WHERE user_id = @userId";
+
+                        using (NpgsqlCommand deleteRolesCommand = new NpgsqlCommand(deleteRolesSql, connection, transaction))
+                        {
+                            deleteRolesCommand.Parameters.AddWithValue("@userId", id);
+                            await deleteRolesCommand.ExecuteNonQueryAsync();
+                        }
+
+                        // Delete user
+                        string deleteUserSql = @"
+                            DELETE FROM user 
+                            WHERE id = @id";
+
+                        using (NpgsqlCommand deleteUserCommand = new NpgsqlCommand(deleteUserSql, connection, transaction))
+                        {
+                            deleteUserCommand.Parameters.AddWithValue("@id", id);
+                            int rowsAffected = await deleteUserCommand.ExecuteNonQueryAsync();
+
+                            if (rowsAffected == 0)
+                            {
+                                await transaction.RollbackAsync();
+                                return false;
+                            }
+                        }
+
+                        await transaction.CommitAsync();
+                        return true;
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
+                }
+            }
         }
 
         /// <summary>
         /// Retrieves all users from the database.
         /// </summary>
         /// <returns>A list of all users.</returns>
-        public Task<List<User>> GetAllAsync()
+        public async Task<List<User>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                string getAllUsersSql = @"
+                    SELECT id, email, password_hash, first_name, last_name, is_active, last_login_at, created_at, updated_at
+                    FROM user
+                    ORDER BY created_at DESC";
+
+                List<User> users = new List<User>();
+
+                using (NpgsqlCommand userCommand = new NpgsqlCommand(getAllUsersSql, connection))
+                {
+                    using (NpgsqlDataReader userReader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
+                    {
+                        while (await userReader.ReadAsync())
+                        {
+                            Guid id = userReader.GetGuid(userReader.GetOrdinal("id"));
+                            string email = userReader.GetString(userReader.GetOrdinal("email"));
+                            string passwordHash = userReader.GetString(userReader.GetOrdinal("password_hash"));
+                            string firstName = userReader.GetString(userReader.GetOrdinal("first_name"));
+                            string lastName = userReader.GetString(userReader.GetOrdinal("last_name"));
+                            bool isActive = userReader.GetBoolean(userReader.GetOrdinal("is_active"));
+                            DateTime? lastLoginAt = userReader.IsDBNull(userReader.GetOrdinal("last_login_at")) ? null : userReader.GetDateTime(userReader.GetOrdinal("last_login_at"));
+                            DateTime createdAt = userReader.GetDateTime(userReader.GetOrdinal("created_at"));
+                            DateTime updatedAt = userReader.GetDateTime(userReader.GetOrdinal("updated_at"));
+
+                            // Get user roles
+                            List<string> roles = await GetUserRolesAsync(id, connection);
+
+                            users.Add(new User(
+                                id,
+                                email,
+                                passwordHash,
+                                firstName,
+                                lastName,
+                                isActive,
+                                lastLoginAt,
+                                createdAt,
+                                updatedAt,
+                                roles));
+                        }
+                    }
+                }
+
+                return users;
+            }
         }
 
         /// <summary>
@@ -266,9 +357,25 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// </summary>
         /// <param name="email">The email address to check.</param>
         /// <returns>True if a user with the email exists, false otherwise.</returns>
-        public Task<bool> ExistsByEmailAsync(string email)
+        public async Task<bool> ExistsByEmailAsync(string email)
         {
-            throw new NotImplementedException();
+            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                string existsSql = @"
+                    SELECT COUNT(1)
+                    FROM user
+                    WHERE email = @email";
+
+                using (NpgsqlCommand existsCommand = new NpgsqlCommand(existsSql, connection))
+                {
+                    existsCommand.Parameters.AddWithValue("@email", email);
+                    object? result = await existsCommand.ExecuteScalarAsync();
+                    long count = result == null ? 0 : (long)result;
+                    return count > 0;
+                }
+            }
         }
 
         /// <summary>
@@ -277,9 +384,25 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="id">The unique identifier of the user.</param>
         /// <param name="lastLoginAt">The timestamp of the last login.</param>
         /// <returns>True if the update was successful, false if user not found.</returns>
-        public Task<bool> UpdateLastLoginAsync(Guid id, DateTime lastLoginAt)
+        public async Task<bool> UpdateLastLoginAsync(Guid id, DateTime lastLoginAt)
         {
-            throw new NotImplementedException();
+            using (NpgsqlConnection connection = new NpgsqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                string updateLastLoginSql = @"
+                    UPDATE user 
+                    SET last_login_at = @lastLoginAt
+                    WHERE id = @id";
+
+                using (NpgsqlCommand updateCommand = new NpgsqlCommand(updateLastLoginSql, connection))
+                {
+                    updateCommand.Parameters.AddWithValue("@id", id);
+                    updateCommand.Parameters.AddWithValue("@lastLoginAt", lastLoginAt);
+                    int rowsAffected = await updateCommand.ExecuteNonQueryAsync();
+                    return rowsAffected > 0;
+                }
+            }
         }
 
         /// <summary>
@@ -323,7 +446,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
             using (NpgsqlCommand userCommand = new NpgsqlCommand(getUserSql, connection))
             {
-                userCommand.Parameters.AddWithValue($"@{parameterName}", parameterValue);
+                userCommand.Parameters.AddWithValue($"@{parameterName}", (object?)parameterValue ?? DBNull.Value);
 
                 using (NpgsqlDataReader userReader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
                 {

@@ -41,34 +41,34 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
                 _logger = logger;
             }
 
-            public void WriteInformation(string message)
+            public void LogTrace(string message, params object[] args)
             {
-                _logger.LogInformation(message);
+                _logger.LogTrace(message, args);
             }
 
-            public void WriteInformation(string message, params object[] args)
+            public void LogDebug(string message, params object[] args)
+            {
+                _logger.LogDebug(message, args);
+            }
+
+            public void LogInformation(string message, params object[] args)
             {
                 _logger.LogInformation(message, args);
             }
 
-            public void WriteError(string message)
+            public void LogWarning(string message, params object[] args)
             {
-                _logger.LogError(message);
+                _logger.LogWarning(message, args);
             }
 
-            public void WriteError(string message, params object[] args)
+            public void LogError(string message, params object[] args)
             {
                 _logger.LogError(message, args);
             }
 
-            public void WriteWarning(string message)
+            public void LogError(Exception exception, string message, params object[] args)
             {
-                _logger.LogWarning(message);
-            }
-
-            public void WriteWarning(string message, params object[] args)
-            {
-                _logger.LogWarning(message, args);
+                _logger.LogError(exception, message, args);
             }
         }
     }

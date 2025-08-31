@@ -19,13 +19,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
             services.AddSingleton<OllamaClientProvider>();
 
             // Try to preload services (but don't fail if they can't connect)
-            var serviceProvider = services.BuildServiceProvider();
-            var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+            IServiceProvider serviceProvider = services.BuildServiceProvider();
+            ILogger<Program> logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 
             // Preload embedding service
             try
             {
-                var embeddingProvider = serviceProvider.GetRequiredService<EmbeddingServiceProvider>();
+                EmbeddingServiceProvider embeddingProvider = serviceProvider.GetRequiredService<EmbeddingServiceProvider>();
                 await embeddingProvider.GetServiceAsync(); // Preload attempt
             }
             catch (Exception ex)
@@ -36,7 +36,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
             // Preload one-shot service container
             try
             {
-                var oneShotProvider = serviceProvider.GetRequiredService<OneShotServiceContainerProvider>();
+                OneShotServiceContainerProvider oneShotProvider = serviceProvider.GetRequiredService<OneShotServiceContainerProvider>();
                 await oneShotProvider.GetServiceAsync(); // Preload attempt
             }
             catch (Exception ex)
@@ -47,7 +47,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
             // Preload Ollama client
             try
             {
-                var ollamaClientProvider = serviceProvider.GetRequiredService<OllamaClientProvider>();
+                OllamaClientProvider ollamaClientProvider = serviceProvider.GetRequiredService<OllamaClientProvider>();
                 await ollamaClientProvider.GetServiceAsync(); // Preload attempt
             }
             catch (Exception ex)
