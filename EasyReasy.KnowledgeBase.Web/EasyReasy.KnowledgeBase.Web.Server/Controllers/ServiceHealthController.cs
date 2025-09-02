@@ -27,7 +27,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         [HttpGet]
         public async Task<IActionResult> GetHealthStatus([FromQuery] bool refresh = false)
         {
-            List<IServiceHealthReport> services = new List<IServiceHealthReport>
+            List<IServiceHealthReport> services = new()
             {
                 _embeddingServiceProvider,
                 _oneShotServiceContainerProvider,
@@ -39,12 +39,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
             {
                 // Start all refresh tasks concurrently
                 Task[] refreshTasks = services.Select(service => service.RefreshAsync()).ToArray();
-                
+
                 // Await all refresh tasks to complete
                 await Task.WhenAll(refreshTasks);
             }
 
-            ServiceHealthResponse response = new ServiceHealthResponse(services);
+            ServiceHealthResponse response = new(services);
             return Ok(response);
         }
     }

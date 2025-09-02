@@ -15,8 +15,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
     public class FileStorageService : IFileStorageService
     {
         private readonly IFileSystem _fileSystem;
-        private readonly IKnowledgeFileRepository _fileRepository;
-        private readonly IKnowledgeBaseAuthorizationService _authorizationService;
+        private readonly ILibraryFileRepository _fileRepository;
+        private readonly ILibraryAuthorizationService _authorizationService;
         private readonly IFileHashService _fileHashService;
         private readonly IMemoryCache _sessionCache;
         private readonly ILogger<FileStorageService> _logger;
@@ -29,15 +29,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// </summary>
         /// <param name="fileSystem">The file system for storage operations.</param>
         /// <param name="fileRepository">The repository for file metadata operations.</param>
-        /// <param name="authorizationService">The service for handling knowledge base authorization.</param>
+        /// <param name="authorizationService">The service for handling library authorization.</param>
         /// <param name="fileHashService">The service for computing file hashes.</param>
         /// <param name="sessionCache">The memory cache for upload session management.</param>
         /// <param name="maxFileSizeBytes">The maximum file size in bytes that can be uploaded.</param>
         /// <param name="logger">The logger for logging operations.</param>
         public FileStorageService(
-            IFileSystem fileSystem, 
-            IKnowledgeFileRepository fileRepository,
-            IKnowledgeBaseAuthorizationService authorizationService,
+            IFileSystem fileSystem,
+            ILibraryFileRepository fileRepository,
+            ILibraryAuthorizationService authorizationService,
             IFileHashService fileHashService,
             IMemoryCache sessionCache,
             long maxFileSizeBytes,
@@ -54,7 +54,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 
         /// <inheritdoc/>
         public async Task<ChunkedUploadSession> InitiateChunkedUploadAsync(
-            Guid knowledgeBaseId,
+            Guid libraryId,
             string fileName,
             string contentType,
             long totalSize,
@@ -64,7 +64,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         {
             if (string.IsNullOrWhiteSpace(fileName))
                 throw new ArgumentException("File name cannot be null or empty.", nameof(fileName));
-            
+
             if (string.IsNullOrWhiteSpace(contentType))
                 throw new ArgumentException("Content type cannot be null or empty.", nameof(contentType));
 
@@ -79,20 +79,20 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 
             try
             {
-                // Check write permission for the knowledge base
-                await _authorizationService.ValidateAccessAsync(uploadedByUserId, knowledgeBaseId, KnowledgeBasePermissionType.Write, "initiate file upload");
+                // Check write permission for the library
+                await _authorizationService.ValidateAccessAsync(uploadedByUserId, libraryId, LibraryPermissionType.Write, "initiate file upload");
 
-                // Ensure the knowledge base directory exists
-                await EnsureKnowledgeBaseExistsAsync(knowledgeBaseId, cancellationToken);
+                // Ensure the library directory exists
+                await EnsureLibraryExistsAsync(libraryId, cancellationToken);
 
                 // Create upload session
                 Guid sessionId = Guid.NewGuid();
                 DateTime now = DateTime.UtcNow;
                 DateTime expiresAt = now.Add(SessionExpiry);
 
-                ChunkedUploadSession session = new ChunkedUploadSession(
+                ChunkedUploadSession session = new(
                     sessionId: sessionId,
-                    knowledgeBaseId: knowledgeBaseId,
+                    libraryId: libraryId,
                     originalFileName: fileName,
                     contentType: contentType,
                     totalSize: totalSize,
@@ -111,15 +111,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 string cacheKey = GetSessionCacheKey(sessionId);
                 _sessionCache.Set(cacheKey, session, expiresAt);
 
-                _logger.LogInformation("Initiated chunked upload session {SessionId} for file {FileName} in knowledge base {KnowledgeBaseId}", 
-                    sessionId, fileName, knowledgeBaseId);
+                _logger.LogInformation("Initiated chunked upload session {SessionId} for file {FileName} in library {LibraryId}",
+                    sessionId, fileName, libraryId);
 
                 return session;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to initiate chunked upload for file {FileName} in knowledge base {KnowledgeBaseId}", 
-                    fileName, knowledgeBaseId);
+                _logger.LogError(ex, "Failed to initiate chunked upload for file {FileName} in library {LibraryId}",
+                    fileName, libraryId);
                 throw;
             }
         }
@@ -147,7 +147,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             try
             {
                 // Calculate expected chunk size (last chunk might be smaller)
-                long expectedChunkSize = chunkNumber == session.TotalChunks - 1 
+                long expectedChunkSize = chunkNumber == session.TotalChunks - 1
                     ? session.TotalSize - (chunkNumber * session.ChunkSize)
                     : session.ChunkSize;
 
@@ -156,10 +156,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 {
                     // Seek to the correct position for this chunk
                     tempFileStream.Seek(chunkNumber * session.ChunkSize, SeekOrigin.Begin);
-                    
+
                     // Copy chunk data
                     await chunkData.CopyToAsync(tempFileStream, cancellationToken);
-                    
+
                     // Verify the chunk size (for data integrity)
                     if (tempFileStream.Position - (chunkNumber * session.ChunkSize) != expectedChunkSize)
                     {
@@ -175,21 +175,21 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 string cacheKey = GetSessionCacheKey(sessionId);
                 _sessionCache.Set(cacheKey, session, session.ExpiresAt);
 
-                _logger.LogDebug("Successfully uploaded chunk {ChunkNumber}/{TotalChunks} for session {SessionId}", 
+                _logger.LogDebug("Successfully uploaded chunk {ChunkNumber}/{TotalChunks} for session {SessionId}",
                     chunkNumber + 1, session.TotalChunks, sessionId);
 
                 return session;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to upload chunk {ChunkNumber} for session {SessionId}", 
+                _logger.LogError(ex, "Failed to upload chunk {ChunkNumber} for session {SessionId}",
                     chunkNumber, sessionId);
                 throw;
             }
         }
 
         /// <inheritdoc/>
-        public async Task<KnowledgeFileDto> CompleteChunkedUploadAsync(
+        public async Task<LibraryFileDto> CompleteChunkedUploadAsync(
             Guid sessionId,
             CancellationToken cancellationToken = default)
         {
@@ -203,11 +203,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             try
             {
                 // Move assembled file to final location
-                string knowledgeBasePath = GetKnowledgeBasePath(session.KnowledgeBaseId);
+                string libraryPath = GetLibraryPath(session.LibraryId);
                 Guid fileId = Guid.NewGuid();
                 string fileExtension = Path.GetExtension(session.OriginalFileName);
                 string storedFileName = $"{fileId:N}{fileExtension}";
-                string finalPath = Path.Combine(knowledgeBasePath, storedFileName);
+                string finalPath = Path.Combine(libraryPath, storedFileName);
 
                 // Copy from temp file to final location
                 using (Stream tempStream = await _fileSystem.OpenFileForReadingAsync(session.TempFilePath, cancellationToken))
@@ -233,8 +233,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 }
 
                 // Store file metadata in database
-                KnowledgeFile fileRecord = await _fileRepository.CreateAsync(
-                    knowledgeBaseId: session.KnowledgeBaseId,
+                LibraryFile fileRecord = await _fileRepository.CreateAsync(
+                    libraryId: session.LibraryId,
                     originalFileName: session.OriginalFileName,
                     contentType: session.ContentType,
                     sizeInBytes: finalFileSize,
@@ -246,15 +246,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 // Clean up upload session and temp file
                 await CleanupUploadSessionAsync(sessionId, cancellationToken);
 
-                _logger.LogInformation("Successfully completed chunked upload for session {SessionId}. Final file ID: {FileId}", 
+                _logger.LogInformation("Successfully completed chunked upload for session {SessionId}. Final file ID: {FileId}",
                     sessionId, fileRecord.Id);
 
-                return KnowledgeFileDto.FromFile(fileRecord);
+                return LibraryFileDto.FromFile(fileRecord);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to complete chunked upload for session {SessionId}", sessionId);
-                
+
                 // Try to clean up on failure
                 try
                 {
@@ -264,7 +264,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 {
                     _logger.LogWarning(cleanupEx, "Failed to clean up upload session {SessionId} after completion failure", sessionId);
                 }
-                
+
                 throw;
             }
         }
@@ -281,7 +281,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 {
                     return session;
                 }
-                
+
                 // Remove expired session
                 _sessionCache.Remove(cacheKey);
                 if (session != null)
@@ -310,25 +310,25 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 return false;
 
             await CleanupUploadSessionAsync(sessionId, cancellationToken);
-            
+
             _logger.LogInformation("Cancelled chunked upload session {SessionId}", sessionId);
             return true;
         }
 
         /// <inheritdoc/>
-        public async Task<KnowledgeFileDto?> GetFileInfoAsync(
-            Guid knowledgeBaseId, 
+        public async Task<LibraryFileDto?> GetFileInfoAsync(
+            Guid libraryId,
             Guid fileId,
             Guid userId,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                // Check read permission for the knowledge base
-                await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "access file information");
+                // Check read permission for the library
+                await _authorizationService.ValidateAccessAsync(userId, libraryId, LibraryPermissionType.Read, "access file information");
 
-                KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
-                return file == null ? null : KnowledgeFileDto.FromFile(file);
+                LibraryFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(libraryId, fileId);
+                return file == null ? null : LibraryFileDto.FromFile(file);
             }
             catch (UnauthorizedAccessException)
             {
@@ -336,59 +336,59 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to get file info for file {FileId} in knowledge base {KnowledgeBaseId}", 
-                    fileId, knowledgeBaseId);
+                _logger.LogWarning(ex, "Failed to get file info for file {FileId} in library {LibraryId}",
+                    fileId, libraryId);
                 return null;
             }
         }
 
         /// <inheritdoc/>
         public async Task<Stream> GetFileStreamAsync(
-            Guid knowledgeBaseId, 
+            Guid libraryId,
             Guid fileId,
             Guid userId,
             CancellationToken cancellationToken = default)
         {
-            // Check read permission for the knowledge base
-            await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "access file content");
+            // Check read permission for the library
+            await _authorizationService.ValidateAccessAsync(userId, libraryId, LibraryPermissionType.Read, "access file content");
 
-            KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
+            LibraryFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(libraryId, fileId);
             if (file == null)
-                throw new FileNotFoundException($"File {fileId} not found in knowledge base {knowledgeBaseId}");
+                throw new FileNotFoundException($"File {fileId} not found in library {libraryId}");
 
             return await _fileSystem.OpenFileForReadingAsync(file.RelativePath, cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task<string> GetFileContentAsync(
-            Guid knowledgeBaseId, 
+            Guid libraryId,
             Guid fileId,
             Guid userId,
             CancellationToken cancellationToken = default)
         {
-            // Check read permission for the knowledge base
-            await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "access file content");
+            // Check read permission for the library
+            await _authorizationService.ValidateAccessAsync(userId, libraryId, LibraryPermissionType.Read, "access file content");
 
-            KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
+            LibraryFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(libraryId, fileId);
             if (file == null)
-                throw new FileNotFoundException($"File {fileId} not found in knowledge base {knowledgeBaseId}");
+                throw new FileNotFoundException($"File {fileId} not found in library {libraryId}");
 
             return await _fileSystem.ReadFileAsTextAsync(file.RelativePath, cancellationToken: cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task<bool> DeleteFileAsync(
-            Guid knowledgeBaseId, 
+            Guid libraryId,
             Guid fileId,
             Guid userId,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                // Check write permission for the knowledge base (users can delete files with write permission)
-                await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Write, "delete file");
+                // Check write permission for the library (users can delete files with write permission)
+                await _authorizationService.ValidateAccessAsync(userId, libraryId, LibraryPermissionType.Write, "delete file");
 
-                KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
+                LibraryFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(libraryId, fileId);
                 if (file == null)
                     return false;
 
@@ -403,8 +403,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 
                 if (deleted)
                 {
-                    _logger.LogInformation("Successfully deleted file {FileId} from knowledge base {KnowledgeBaseId}", 
-                        fileId, knowledgeBaseId);
+                    _logger.LogInformation("Successfully deleted file {FileId} from library {LibraryId}",
+                        fileId, libraryId);
                 }
 
                 return deleted;
@@ -415,25 +415,25 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to delete file {FileId} from knowledge base {KnowledgeBaseId}", 
-                    fileId, knowledgeBaseId);
+                _logger.LogError(ex, "Failed to delete file {FileId} from library {LibraryId}",
+                    fileId, libraryId);
                 throw;
             }
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<KnowledgeFileDto>> ListFilesAsync(
-            Guid knowledgeBaseId,
+        public async Task<IEnumerable<LibraryFileDto>> ListFilesAsync(
+            Guid libraryId,
             Guid userId,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                // Check read permission for the knowledge base
-                await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "list files");
+                // Check read permission for the library
+                await _authorizationService.ValidateAccessAsync(userId, libraryId, LibraryPermissionType.Read, "list files");
 
-                List<KnowledgeFile> files = await _fileRepository.GetByKnowledgeBaseIdAsync(knowledgeBaseId);
-                return files.Select(KnowledgeFileDto.FromFile).ToList();
+                List<LibraryFile> files = await _fileRepository.GetByKnowledgeBaseIdAsync(libraryId);
+                return files.Select(LibraryFileDto.FromFile).ToList();
             }
             catch (UnauthorizedAccessException)
             {
@@ -441,64 +441,64 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to list files in knowledge base {KnowledgeBaseId}", knowledgeBaseId);
+                _logger.LogError(ex, "Failed to list files in library {LibraryId}", libraryId);
                 throw;
             }
         }
 
         /// <inheritdoc/>
         public async Task<bool> FileExistsAsync(
-            Guid knowledgeBaseId, 
+            Guid libraryId,
             Guid fileId,
             Guid userId,
             CancellationToken cancellationToken = default)
         {
-            // Check read permission for the knowledge base
-            await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "check file existence");
+            // Check read permission for the library
+            await _authorizationService.ValidateAccessAsync(userId, libraryId, LibraryPermissionType.Read, "check file existence");
 
-            return await _fileRepository.ExistsInKnowledgeBaseAsync(knowledgeBaseId, fileId);
+            return await _fileRepository.ExistsInKnowledgeBaseAsync(libraryId, fileId);
         }
 
         /// <inheritdoc/>
-        public async Task EnsureKnowledgeBaseExistsAsync(
-            Guid knowledgeBaseId, 
+        public async Task EnsureLibraryExistsAsync(
+            Guid libraryId,
             CancellationToken cancellationToken = default)
         {
-            string knowledgeBasePath = GetKnowledgeBasePath(knowledgeBaseId);
-            
-            if (!await _fileSystem.DirectoryExistsAsync(knowledgeBasePath, cancellationToken))
+            string libraryPath = GetLibraryPath(libraryId);
+
+            if (!await _fileSystem.DirectoryExistsAsync(libraryPath, cancellationToken))
             {
-                await _fileSystem.CreateDirectoryAsync(knowledgeBasePath, cancellationToken);
-                _logger.LogInformation("Created knowledge base directory for {KnowledgeBaseId}", knowledgeBaseId);
+                await _fileSystem.CreateDirectoryAsync(libraryPath, cancellationToken);
+                _logger.LogInformation("Created library directory for {LibraryId}", libraryId);
             }
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteKnowledgeBaseAsync(
-            Guid knowledgeBaseId,
+        public async Task<bool> DeleteLibraryAsync(
+            Guid libraryId,
             Guid userId,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                // Check admin permission for the knowledge base (only admins can delete entire knowledge bases)
-                await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Admin, "delete knowledge base");
+                // Check admin permission for the library (only admins can delete entire librarys)
+                await _authorizationService.ValidateAccessAsync(userId, libraryId, LibraryPermissionType.Admin, "delete library");
 
                 // Delete all file records from database
-                int deletedRecords = await _fileRepository.DeleteByKnowledgeBaseIdAsync(knowledgeBaseId);
+                int deletedRecords = await _fileRepository.DeleteByKnowledgeBaseIdAsync(libraryId);
 
-                // Delete the knowledge base directory and all files
-                string knowledgeBasePath = GetKnowledgeBasePath(knowledgeBaseId);
-                if (await _fileSystem.DirectoryExistsAsync(knowledgeBasePath, cancellationToken))
+                // Delete the library directory and all files
+                string libraryPath = GetLibraryPath(libraryId);
+                if (await _fileSystem.DirectoryExistsAsync(libraryPath, cancellationToken))
                 {
-                    await _fileSystem.DeleteDirectoryAsync(knowledgeBasePath, deleteNonEmpty: true, cancellationToken);
+                    await _fileSystem.DeleteDirectoryAsync(libraryPath, deleteNonEmpty: true, cancellationToken);
                 }
 
                 bool hadFiles = deletedRecords > 0;
-                
-                _logger.LogInformation("Successfully deleted knowledge base {KnowledgeBaseId} with {FileCount} files", 
-                    knowledgeBaseId, deletedRecords);
-                
+
+                _logger.LogInformation("Successfully deleted library {LibraryId} with {FileCount} files",
+                    libraryId, deletedRecords);
+
                 return hadFiles;
             }
             catch (UnauthorizedAccessException)
@@ -507,14 +507,14 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to delete knowledge base {KnowledgeBaseId}", knowledgeBaseId);
+                _logger.LogError(ex, "Failed to delete library {LibraryId}", libraryId);
                 throw;
             }
         }
 
-        private string GetKnowledgeBasePath(Guid knowledgeBaseId)
+        private string GetLibraryPath(Guid libraryId)
         {
-            return $"kb_{knowledgeBaseId:N}";
+            return $"lib_{libraryId:N}";
         }
 
         private string GetTempFilePath(Guid sessionId)

@@ -14,7 +14,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         [EmailAddress]
         [MaxLength(254)] // RFC 5321 max length
         public string Email { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's password. This will be hashed before storage.
         /// </summary>
@@ -22,26 +22,26 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         [MinLength(8)]
         [MaxLength(128)]
         public string Password { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's first name.
         /// </summary>
         [Required]
         [MaxLength(100)]
         public string FirstName { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's last name.
         /// </summary>
         [Required]
         [MaxLength(100)]
         public string LastName { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the list of role names to assign to the user.
         /// </summary>
         public List<string> Roles { get; set; }
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CreateUserRequest"/> class with the specified user information.
         /// </summary>

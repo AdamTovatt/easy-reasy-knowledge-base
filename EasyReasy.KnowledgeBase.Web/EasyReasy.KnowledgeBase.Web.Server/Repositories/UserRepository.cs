@@ -1,5 +1,5 @@
-using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.KnowledgeBase.Storage;
+using EasyReasy.KnowledgeBase.Web.Server.Models;
 using Npgsql;
 using System.Data;
 
@@ -35,16 +35,16 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             // Input validation
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("Email cannot be null, empty, or whitespace.", nameof(email));
-            
+
             if (string.IsNullOrWhiteSpace(passwordHash))
                 throw new ArgumentException("Password hash cannot be null, empty, or whitespace.", nameof(passwordHash));
-            
+
             if (string.IsNullOrWhiteSpace(firstName))
                 throw new ArgumentException("First name cannot be null, empty, or whitespace.", nameof(firstName));
-            
+
             if (string.IsNullOrWhiteSpace(lastName))
                 throw new ArgumentException("Last name cannot be null, empty, or whitespace.", nameof(lastName));
-            
+
             if (roles == null)
                 throw new ArgumentException("Roles cannot be null.", nameof(roles));
 
@@ -70,7 +70,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         bool isActive;
                         DateTime? lastLoginAt;
 
-                        using (NpgsqlCommand userCommand = new NpgsqlCommand(insertUserSql, npgsqlConnection, transaction))
+                        using (NpgsqlCommand userCommand = new(insertUserSql, npgsqlConnection, transaction))
                         {
                             userCommand.Parameters.AddWithValue("@email", email);
                             userCommand.Parameters.AddWithValue("@passwordHash", passwordHash);
@@ -99,7 +99,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 INSERT INTO user_role (user_id, role_name)
                                 VALUES (@userId, @roleName)";
 
-                            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(insertRolesSql, npgsqlConnection, transaction))
+                            using (NpgsqlCommand rolesCommand = new(insertRolesSql, npgsqlConnection, transaction))
                             {
                                 rolesCommand.Parameters.AddWithValue("@userId", userId);
                                 rolesCommand.Parameters.AddWithValue("@roleName", "");
@@ -129,7 +129,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     catch (PostgresException ex)
                     {
                         await transaction.RollbackAsync();
-                        
+
                         // Handle specific PostgreSQL constraint violations
                         switch (ex.SqlState)
                         {
@@ -200,7 +200,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         {
             // Deduplicate roles to avoid database constraint violations
             List<string> uniqueRoles = user.Roles.Distinct().ToList();
-            User userWithUniqueRoles = new User(
+            User userWithUniqueRoles = new(
                 user.Id,
                 user.Email,
                 user.PasswordHash,
@@ -229,7 +229,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                         DateTime updatedAt;
 
-                        using (NpgsqlCommand userCommand = new NpgsqlCommand(updateUserSql, npgsqlConnection, transaction))
+                        using (NpgsqlCommand userCommand = new(updateUserSql, npgsqlConnection, transaction))
                         {
                             userCommand.Parameters.AddWithValue("@id", userWithUniqueRoles.Id);
                             userCommand.Parameters.AddWithValue("@email", userWithUniqueRoles.Email);
@@ -255,7 +255,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             DELETE FROM user_role 
                             WHERE user_id = @userId";
 
-                        using (NpgsqlCommand deleteRolesCommand = new NpgsqlCommand(deleteRolesSql, npgsqlConnection, transaction))
+                        using (NpgsqlCommand deleteRolesCommand = new(deleteRolesSql, npgsqlConnection, transaction))
                         {
                             deleteRolesCommand.Parameters.AddWithValue("@userId", userWithUniqueRoles.Id);
                             await deleteRolesCommand.ExecuteNonQueryAsync();
@@ -268,7 +268,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 INSERT INTO user_role (user_id, role_name)
                                 VALUES (@userId, @roleName)";
 
-                            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(insertRolesSql, npgsqlConnection, transaction))
+                            using (NpgsqlCommand rolesCommand = new(insertRolesSql, npgsqlConnection, transaction))
                             {
                                 rolesCommand.Parameters.AddWithValue("@userId", userWithUniqueRoles.Id);
                                 rolesCommand.Parameters.AddWithValue("@roleName", "");
@@ -299,7 +299,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     catch (PostgresException ex)
                     {
                         await transaction.RollbackAsync();
-                        
+
                         // Handle specific PostgreSQL constraint violations
                         switch (ex.SqlState)
                         {
@@ -354,7 +354,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             DELETE FROM user_role 
                             WHERE user_id = @userId";
 
-                        using (NpgsqlCommand deleteRolesCommand = new NpgsqlCommand(deleteRolesSql, npgsqlConnection, transaction))
+                        using (NpgsqlCommand deleteRolesCommand = new(deleteRolesSql, npgsqlConnection, transaction))
                         {
                             deleteRolesCommand.Parameters.AddWithValue("@userId", id);
                             await deleteRolesCommand.ExecuteNonQueryAsync();
@@ -365,7 +365,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             DELETE FROM ""user"" 
                             WHERE id = @id";
 
-                        using (NpgsqlCommand deleteUserCommand = new NpgsqlCommand(deleteUserSql, npgsqlConnection, transaction))
+                        using (NpgsqlCommand deleteUserCommand = new(deleteUserSql, npgsqlConnection, transaction))
                         {
                             deleteUserCommand.Parameters.AddWithValue("@id", id);
                             int rowsAffected = await deleteUserCommand.ExecuteNonQueryAsync();
@@ -383,7 +383,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     catch (PostgresException ex)
                     {
                         await transaction.RollbackAsync();
-                        
+
                         // Handle specific PostgreSQL constraint violations
                         switch (ex.SqlState)
                         {
@@ -421,9 +421,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     LEFT JOIN user_role ur ON u.id = ur.user_id
                     ORDER BY u.created_at DESC";
 
-                Dictionary<Guid, User> userDict = new Dictionary<Guid, User>();
+                Dictionary<Guid, User> userDict = new();
 
-                using (NpgsqlCommand userCommand = new NpgsqlCommand(getAllUsersSql, npgsqlConnection))
+                using (NpgsqlCommand userCommand = new(getAllUsersSql, npgsqlConnection))
                 {
                     using (NpgsqlDataReader reader = (NpgsqlDataReader)await userCommand.ExecuteReaderAsync())
                     {
@@ -483,7 +483,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     FROM ""user""
                     WHERE email = @email";
 
-                using (NpgsqlCommand existsCommand = new NpgsqlCommand(existsSql, npgsqlConnection))
+                using (NpgsqlCommand existsCommand = new(existsSql, npgsqlConnection))
                 {
                     existsCommand.Parameters.AddWithValue("@email", email);
                     object? result = await existsCommand.ExecuteScalarAsync();
@@ -509,7 +509,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     SET last_login_at = @lastLoginAt
                     WHERE id = @id";
 
-                using (NpgsqlCommand updateCommand = new NpgsqlCommand(updateLastLoginSql, npgsqlConnection))
+                using (NpgsqlCommand updateCommand = new(updateLastLoginSql, npgsqlConnection))
                 {
                     updateCommand.Parameters.AddWithValue("@id", id);
                     updateCommand.Parameters.AddWithValue("@lastLoginAt", lastLoginAt);
@@ -557,10 +557,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             DateTime? lastLoginAt = null;
             DateTime createdAt = DateTime.MinValue;
             DateTime updatedAt = DateTime.MinValue;
-            List<string> roles = new List<string>();
+            List<string> roles = new();
 
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-            using (NpgsqlCommand userCommand = new NpgsqlCommand(getUserSql, npgsqlConnection))
+            using (NpgsqlCommand userCommand = new(getUserSql, npgsqlConnection))
             {
                 userCommand.Parameters.AddWithValue($"@{parameterName}", (object?)parameterValue ?? DBNull.Value);
 
@@ -624,9 +624,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 FROM user_role
                 WHERE user_id = @userId";
 
-            List<string> roles = new List<string>();
+            List<string> roles = new();
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-            using (NpgsqlCommand rolesCommand = new NpgsqlCommand(getRolesSql, npgsqlConnection))
+            using (NpgsqlCommand rolesCommand = new(getRolesSql, npgsqlConnection))
             {
                 rolesCommand.Parameters.AddWithValue("@userId", userId);
 

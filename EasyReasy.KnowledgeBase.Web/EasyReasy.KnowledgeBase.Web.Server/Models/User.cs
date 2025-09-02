@@ -9,52 +9,52 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
         /// Gets or sets the unique identifier for the user.
         /// </summary>
         public Guid Id { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's email address, which serves as the login identifier for authentication.
         /// </summary>
         public string Email { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the hashed password for the user.
         /// </summary>
         public string PasswordHash { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's first name.
         /// </summary>
         public string FirstName { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's last name.
         /// </summary>
         public string LastName { get; set; }
-        
+
         /// <summary>
         /// Gets or sets whether the user account is active and can be used for authentication.
         /// </summary>
         public bool IsActive { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the timestamp of the user's last successful login, or null if they have never logged in.
         /// </summary>
         public DateTime? LastLoginAt { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the timestamp when the user account was created.
         /// </summary>
         public DateTime CreatedAt { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the timestamp when the user account was last updated.
         /// </summary>
         public DateTime UpdatedAt { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the list of role names assigned to the user. This is populated from the user_role table.
         /// </summary>
         public List<string> Roles { get; set; }
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="User"/> class with all user information.
         /// </summary>

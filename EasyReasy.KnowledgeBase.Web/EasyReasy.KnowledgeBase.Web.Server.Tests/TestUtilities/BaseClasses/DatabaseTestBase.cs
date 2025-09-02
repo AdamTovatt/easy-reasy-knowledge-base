@@ -1,9 +1,9 @@
+using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Storage;
 using EasyReasy.KnowledgeBase.Web.Server.Database;
+using EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.Helpers;
 using Microsoft.Extensions.Logging;
 using System.Data;
-using EasyReasy.EnvironmentVariables;
-using EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.Helpers;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.BaseClasses
 {

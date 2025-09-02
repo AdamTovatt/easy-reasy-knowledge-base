@@ -9,47 +9,47 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         /// Gets or sets the unique identifier for the user.
         /// </summary>
         public Guid Id { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's email address.
         /// </summary>
         public string Email { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's first name.
         /// </summary>
         public string FirstName { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the user's last name.
         /// </summary>
         public string LastName { get; set; }
-        
+
         /// <summary>
         /// Gets or sets whether the user account is active.
         /// </summary>
         public bool IsActive { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the timestamp of the user's last successful login, or null if they have never logged in.
         /// </summary>
         public DateTime? LastLoginAt { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the timestamp when the user account was created.
         /// </summary>
         public DateTime CreatedAt { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the timestamp when the user account was last updated.
         /// </summary>
         public DateTime UpdatedAt { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the list of role names assigned to the user.
         /// </summary>
         public List<string> Roles { get; set; }
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="UserDto"/> class with the specified user information.
         /// </summary>
@@ -83,7 +83,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
             UpdatedAt = updatedAt;
             Roles = roles;
         }
-        
+
         /// <summary>
         /// Creates a <see cref="UserDto"/> from a <see cref="User"/> model, excluding sensitive data.
         /// </summary>

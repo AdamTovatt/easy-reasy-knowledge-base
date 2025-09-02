@@ -24,7 +24,7 @@ This document outlines areas where the current file storage implementation could
 ## Missing Features 📋
 
 - **File versioning** - Can't track file history or updates
-- **Knowledge base permissions** - Who can read/write to which knowledge bases?
+- **Library permissions** - Who can read/write to which libraries?
 - **File metadata search** - Can't search by filename, content type, etc.
 - **Bulk operations** - No bulk delete, download multiple files as zip
 - **File thumbnails/previews** - For images, PDFs, etc.
@@ -39,11 +39,12 @@ This document outlines areas where the current file storage implementation could
 
 ### Recently Implemented ✅
 - **File size limits** - Configurable maximum file size via `MAX_FILE_SIZE_BYTES` environment variable (defaults to 500MB)
-- **Authorization system** - Complete knowledge base permission system with read/write/admin levels
+- **Authorization system** - Complete library permission system with read/write/admin levels
 - **Database schema** - PostgreSQL enum-based permission types with proper foreign key relationships
 - **Service layer security** - All FileStorageService methods now require user authentication and validate permissions
 - **File hashing** - SHA-256 hash computation and storage for all uploaded files via `IFileHashService`
 - **Hash service abstraction** - Pluggable hashing implementation with `Sha256FileHashService` for consistent hash computation across services
+- **Hash service tests** - Comprehensive unit tests for `Sha256FileHashService` with 100% coverage
 
 ### Critical (Should Address Soon)
 1. **Session storage** - Use Redis instead of memory cache for scalability  
@@ -67,48 +68,48 @@ The following test classes and methods should be implemented to ensure proper fu
 
 ### Authorization System Tests
 
-#### KnowledgeBaseAuthorizationServiceTests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Services/Auth/KnowledgeBaseAuthorizationServiceTests.cs`
+#### LibraryAuthorizationServiceTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Services/Auth/LibraryAuthorizationServiceTests.cs`
 - `ValidateAccessAsync_WithOwner_AllowsAllPermissions`
-- `ValidateAccessAsync_WithPublicKnowledgeBase_AllowsRead`
-- `ValidateAccessAsync_WithPublicKnowledgeBase_DeniesWrite`
+- `ValidateAccessAsync_WithPublicLibrary_AllowsRead`
+- `ValidateAccessAsync_WithPublicLibrary_DeniesWrite`
 - `ValidateAccessAsync_WithExplicitReadPermission_AllowsRead`
 - `ValidateAccessAsync_WithExplicitWritePermission_AllowsReadAndWrite`
 - `ValidateAccessAsync_WithExplicitAdminPermission_AllowsAll`
 - `ValidateAccessAsync_WithNoPermission_DeniesAccess`
-- `ValidateAccessAsync_WithNonExistentKnowledgeBase_ThrowsException`
+- `ValidateAccessAsync_WithNonExistentLibrary_ThrowsException`
 - `HasAccessAsync_WithOwner_ReturnsTrue`
 - `HasAccessAsync_WithPublicRead_ReturnsCorrectAccess`
 - `HasAccessAsync_WithExplicitPermissions_ReturnsCorrectAccess`
 - `HasAccessAsync_WithNoPermission_ReturnsFalse`
 
-#### KnowledgeBasePermissionRepositoryTests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/KnowledgeBasePermissionRepositoryTests.cs`
+#### LibraryPermissionRepositoryTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/LibraryPermissionRepositoryTests.cs`
 - `HasPermissionAsync_WithOwner_ReturnsTrue`
 - `HasPermissionAsync_WithExplicitPermission_ReturnsTrue`
 - `HasPermissionAsync_WithInsufficientPermission_ReturnsFalse`
 - `HasPermissionAsync_WithNoPermission_ReturnsFalse`
-- `GetAccessibleKnowledgeBaseIdsAsync_ReturnsOwnedBases`
-- `GetAccessibleKnowledgeBaseIdsAsync_ReturnsPublicBases`
-- `GetAccessibleKnowledgeBaseIdsAsync_ReturnsExplicitPermissions`
+- `GetAccessibleLibraryIdsAsync_ReturnsOwnedLibraries`
+- `GetAccessibleLibraryIdsAsync_ReturnsPublicLibraries`
+- `GetAccessibleLibraryIdsAsync_ReturnsExplicitPermissions`
 - `GrantPermissionAsync_WithValidData_CreatesPermission`
 - `GrantPermissionAsync_WithDuplicatePermission_UpdatesPermission`
-- `GrantPermissionAsync_WithInvalidKnowledgeBase_ThrowsException`
+- `GrantPermissionAsync_WithInvalidLibrary_ThrowsException`
 - `RevokePermissionAsync_WithExistingPermission_RemovesPermission`
 - `RevokePermissionAsync_WithNonExistentPermission_DoesNotThrow`
 
-#### KnowledgeBaseRepositoryTests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/KnowledgeBaseRepositoryTests.cs`
-- `GetByIdAsync_WithExistingId_ReturnsKnowledgeBase`
+#### LibraryRepositoryTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/LibraryRepositoryTests.cs`
+- `GetByIdAsync_WithExistingId_ReturnsLibrary`
 - `GetByIdAsync_WithNonExistentId_ReturnsNull`
-- `CreateAsync_WithValidData_CreatesKnowledgeBase`
+- `CreateAsync_WithValidData_CreatesLibrary`
 - `CreateAsync_WithInvalidData_ThrowsException`
-- `UpdateAsync_WithValidData_UpdatesKnowledgeBase`
+- `UpdateAsync_WithValidData_UpdatesLibrary`
 - `UpdateAsync_WithNonExistentId_ThrowsException`
-- `DeleteAsync_WithExistingId_DeletesKnowledgeBase`
+- `DeleteAsync_WithExistingId_DeletesLibrary`
 - `DeleteAsync_WithNonExistentId_DoesNotThrow`
-- `GetByOwnerIdAsync_ReturnsOwnedKnowledgeBases`
-- `GetPublicKnowledgeBasesAsync_ReturnsOnlyPublicBases`
+- `GetByOwnerIdAsync_ReturnsOwnedLibraries`
+- `GetPublicLibrariesAsync_ReturnsOnlyPublicLibraries`
 
 ### File Storage System Tests
 
@@ -137,72 +138,72 @@ The following test classes and methods should be implemented to ensure proper fu
 - `GetFileContentAsync_WithValidFile_ReturnsContent`
 - `DeleteFileAsync_WithValidFile_DeletesFile`
 - `DeleteFileAsync_WithoutWritePermission_ThrowsUnauthorizedException`
-- `ListFilesAsync_WithValidKnowledgeBase_ReturnsFiles`
+- `ListFilesAsync_WithValidLibrary_ReturnsFiles`
 - `ListFilesAsync_WithoutReadPermission_ThrowsUnauthorizedException`
 - `FileExistsAsync_WithExistingFile_ReturnsTrue`
 - `FileExistsAsync_WithNonExistentFile_ReturnsFalse`
-- `DeleteKnowledgeBaseAsync_WithValidBase_DeletesAllFiles`
-- `DeleteKnowledgeBaseAsync_WithoutAdminPermission_ThrowsUnauthorizedException`
+- `DeleteLibraryAsync_WithValidLibrary_DeletesAllFiles`
+- `DeleteLibraryAsync_WithoutAdminPermission_ThrowsUnauthorizedException`
 
-#### Sha256FileHashServiceTests
+#### ✅ Sha256FileHashServiceTests (COMPLETED)
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Services/Hashing/Sha256FileHashServiceTests.cs`
-- `ComputeHashAsync_WithValidStream_ReturnsCorrectHash`
-- `ComputeHashAsync_WithNullStream_ThrowsArgumentNullException`
-- `ComputeHashAsync_WithValidFilePath_ReturnsCorrectHash`
-- `ComputeHashAsync_WithNullFilePath_ThrowsArgumentException`
-- `ComputeHashAsync_WithEmptyFilePath_ThrowsArgumentException`
-- `ComputeHashAsync_WithNonExistentFile_ThrowsFileNotFoundException`
-- `ToHexString_WithValidHash_ReturnsCorrectHexString`
-- `ToHexString_WithNullHash_ThrowsArgumentNullException`
-- `FromHexString_WithValidHex_ReturnsCorrectBytes`
-- `FromHexString_WithNullHex_ThrowsArgumentException`
-- `FromHexString_WithEmptyHex_ThrowsArgumentException`
-- `FromHexString_WithOddLengthHex_ThrowsArgumentException`
-- `FromHexString_WithInvalidHexCharacters_ThrowsFormatException`
-- `AlgorithmName_ReturnsCorrectValue`
-- `HashLength_ReturnsCorrectValue`
+- ✅ `ComputeHashAsync_WithValidStream_ReturnsCorrectHash`
+- ✅ `ComputeHashAsync_WithNullStream_ThrowsArgumentNullException`
+- ✅ `ComputeHashAsync_WithValidFilePath_ReturnsCorrectHash`
+- ✅ `ComputeHashAsync_WithNullFilePath_ThrowsArgumentException`
+- ✅ `ComputeHashAsync_WithEmptyFilePath_ThrowsArgumentException`
+- ✅ `ComputeHashAsync_WithNonExistentFile_ThrowsFileNotFoundException`
+- ✅ `ToHexString_WithValidHash_ReturnsCorrectHexString`
+- ✅ `ToHexString_WithNullHash_ThrowsArgumentNullException`
+- ✅ `FromHexString_WithValidHex_ReturnsCorrectBytes`
+- ✅ `FromHexString_WithNullHex_ThrowsArgumentException`
+- ✅ `FromHexString_WithEmptyHex_ThrowsArgumentException`
+- ✅ `FromHexString_WithOddLengthHex_ThrowsArgumentException`
+- ✅ `FromHexString_WithInvalidHexCharacters_ThrowsFormatException`
+- ✅ `AlgorithmName_ReturnsCorrectValue`
+- ✅ `HashLength_ReturnsCorrectValue`
 
 ### Repository Tests
 
-#### KnowledgeFileRepositoryTests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/KnowledgeFileRepositoryTests.cs`
+#### LibraryFileRepositoryTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/LibraryFileRepositoryTests.cs`
 - `CreateAsync_WithValidData_CreatesFile`
 - `CreateAsync_WithNullHash_ThrowsArgumentException`
 - `CreateAsync_WithEmptyHash_ThrowsArgumentException`
-- `CreateAsync_WithInvalidKnowledgeBaseId_ThrowsException`
+- `CreateAsync_WithInvalidLibraryId_ThrowsException`
 - `CreateAsync_WithDuplicateRelativePath_ThrowsException`
-- `GetByIdInKnowledgeBaseAsync_WithExistingFile_ReturnsFile`
-- `GetByIdInKnowledgeBaseAsync_WithNonExistentFile_ReturnsNull`
-- `GetByIdInKnowledgeBaseAsync_WithWrongKnowledgeBase_ReturnsNull`
-- `GetByKnowledgeBaseIdAsync_WithFiles_ReturnsAllFiles`
-- `GetByKnowledgeBaseIdAsync_WithNoFiles_ReturnsEmptyList`
-- `GetByKnowledgeBaseIdAndUserIdAsync_WithUserFiles_ReturnsUserFiles`
-- `GetKnowledgeFileByParameterAsync_WithValidParameter_ReturnsFile`
+- `GetByIdInLibraryAsync_WithExistingFile_ReturnsFile`
+- `GetByIdInLibraryAsync_WithNonExistentFile_ReturnsNull`
+- `GetByIdInLibraryAsync_WithWrongLibrary_ReturnsNull`
+- `GetByLibraryIdAsync_WithFiles_ReturnsAllFiles`
+- `GetByLibraryIdAsync_WithNoFiles_ReturnsEmptyList`
+- `GetByLibraryIdAndUserIdAsync_WithUserFiles_ReturnsUserFiles`
+- `GetLibraryFileByParameterAsync_WithValidParameter_ReturnsFile`
 - `DeleteAsync_WithExistingFile_DeletesFile`
 - `DeleteAsync_WithNonExistentFile_DoesNotThrow`
 
 ### Model and DTO Tests
 
-#### KnowledgeBaseTests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/KnowledgeBaseTests.cs`
+#### LibraryTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/LibraryTests.cs`
 - `Constructor_WithValidData_CreatesInstance`
 - `Constructor_WithNullValues_ThrowsArgumentException`
 - `Constructor_WithEmptyStrings_ThrowsArgumentException`
 
-#### KnowledgeBasePermissionTests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/KnowledgeBasePermissionTests.cs`
+#### LibraryPermissionTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/LibraryPermissionTests.cs`
 - `Constructor_WithValidData_CreatesInstance`
 - `Constructor_WithInvalidPermissionType_ThrowsException`
 
-#### KnowledgeFileTests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/KnowledgeFileTests.cs`
+#### LibraryFileTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/LibraryFileTests.cs`
 - `Constructor_WithValidData_CreatesInstance`
 - `Constructor_WithNullHash_ThrowsArgumentException`
 - `Constructor_WithEmptyHash_ThrowsArgumentException`
 - `Constructor_WithNegativeSize_ThrowsArgumentException`
 
-#### KnowledgeFileDtoTests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/Dto/KnowledgeFileDtoTests.cs`
+#### LibraryFileDtoTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/Dto/LibraryFileDtoTests.cs`
 - `FromFile_WithValidFile_ConvertsHashToHexCorrectly`
 - `FromFile_WithFileContainingNullHash_ThrowsException`
 - `Constructor_WithValidHashHex_CreatesCorrectly`
@@ -224,7 +225,7 @@ The following test classes and methods should be implemented to ensure proper fu
 - `DownloadFile_WithoutPermission_ReturnsForbidden`
 - `DeleteFile_WithValidFile_ReturnsSuccess`
 - `DeleteFile_WithoutPermission_ReturnsForbidden`
-- `ListFiles_WithValidKnowledgeBase_ReturnsFileList`
+- `ListFiles_WithValidLibrary_ReturnsFileList`
 - `ListFiles_WithoutPermission_ReturnsForbidden`
 
 ### Integration Tests
@@ -236,12 +237,12 @@ The following test classes and methods should be implemented to ensure proper fu
 - `MultipleChunkedUploads_CompleteIndependently`
 - `FileHashConsistency_AcrossServiceRestarts`
 - `PermissionChanges_ReflectedInFileAccess`
-- `KnowledgeBasePermissions_EnforceFileAccess`
+- `LibraryPermissions_EnforceFileAccess`
 
 #### AuthorizationIntegrationTests
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Integration/AuthorizationIntegrationTests.cs`
 - `OwnerAccess_AllowsAllOperations`
-- `PublicKnowledgeBase_AllowsReadOnlyAccess`
+- `PublicLibrary_AllowsReadOnlyAccess`
 - `ExplicitPermissions_EnforceCorrectAccess`
 - `PermissionInheritance_WorksCorrectly`
 - `MultiUserScenarios_IsolateAccess`

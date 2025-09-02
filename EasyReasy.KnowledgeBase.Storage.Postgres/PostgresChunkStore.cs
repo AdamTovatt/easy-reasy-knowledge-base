@@ -134,7 +134,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres
             Guid[] ids = chunkIds.ToArray();
 
             using IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync();
-            
+
             // Use a parameterized query with multiple values
             string placeholders = string.Join(",", ids.Select((_, i) => $"@Id{i}"));
             using NpgsqlCommand command = new NpgsqlCommand(

@@ -1,6 +1,4 @@
 using EasyReasy.KnowledgeBase.Models;
-using EasyReasy.KnowledgeBase.Storage.Postgres;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 {
@@ -253,7 +251,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             // Assert
             KnowledgeFileSection? retrieved1 = await _knowledgeStore.Sections.GetByIndexAsync(file.Id, 0);
             KnowledgeFileSection? retrieved2 = await _knowledgeStore.Sections.GetByIndexAsync(file.Id, 1);
-            
+
             Assert.IsNotNull(retrieved1);
             Assert.IsNotNull(retrieved2);
             Assert.AreEqual("Section 1", retrieved1.Summary);

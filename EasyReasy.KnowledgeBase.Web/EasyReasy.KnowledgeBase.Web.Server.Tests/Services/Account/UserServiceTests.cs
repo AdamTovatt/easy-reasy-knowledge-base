@@ -1,8 +1,8 @@
+using EasyReasy.Auth;
+using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.KnowledgeBase.Web.Server.Services.Account;
 using EasyReasy.KnowledgeBase.Web.Server.Tests.Mocks;
-using EasyReasy.Auth;
-using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.BaseClasses;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Tests.Services.Account

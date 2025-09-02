@@ -1,8 +1,8 @@
+using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.KnowledgeBase.Web.Server.Repositories;
 using EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.BaseClasses;
 using EasyReasy.KnowledgeBase.Web.Server.Tests.TestUtilities.Helpers;
-using EasyReasy.EnvironmentVariables;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Tests.Repositories
 {
@@ -294,7 +294,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Tests.Repositories
             Assert.IsNotNull(updatedUser.LastLoginAt);
             // Compare with tolerance for potential precision differences in database storage
             TimeSpan difference = lastLoginAt - updatedUser.LastLoginAt.Value;
-            Assert.IsTrue(Math.Abs(difference.TotalMilliseconds) < 100, 
+            Assert.IsTrue(Math.Abs(difference.TotalMilliseconds) < 100,
                 $"DateTime difference too large: {difference.TotalMilliseconds}ms. Expected: {lastLoginAt}, Actual: {updatedUser.LastLoginAt}");
         }
 

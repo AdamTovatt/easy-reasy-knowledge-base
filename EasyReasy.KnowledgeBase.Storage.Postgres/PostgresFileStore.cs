@@ -1,5 +1,4 @@
 using EasyReasy.KnowledgeBase.Models;
-using EasyReasy.KnowledgeBase.Storage;
 using Npgsql;
 using System.Data;
 

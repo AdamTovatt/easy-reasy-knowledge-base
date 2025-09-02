@@ -49,7 +49,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
                     return Unauthorized("Invalid user authentication");
 
                 ChunkedUploadSession session = await _fileStorageService.InitiateChunkedUploadAsync(
-                    knowledgeBaseId: request.KnowledgeBaseId,
+                    libraryId: request.LibraryId,
                     fileName: request.FileName,
                     contentType: request.ContentType,
                     totalSize: request.TotalSize,
@@ -130,8 +130,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                KnowledgeFileDto fileInfo = await _fileStorageService.CompleteChunkedUploadAsync(sessionId, cancellationToken);
-                FileUploadResponse response = new FileUploadResponse(
+                LibraryFileDto fileInfo = await _fileStorageService.CompleteChunkedUploadAsync(sessionId, cancellationToken);
+                FileUploadResponse response = new(
                     success: true,
                     message: "File uploaded successfully",
                     fileInfo: fileInfo
@@ -200,13 +200,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         }
 
         /// <summary>
-        /// Lists all files in a knowledge base.
+        /// Lists all files in a library.
         /// </summary>
-        /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="libraryId">The unique identifier for the library.</param>
         /// <param name="cancellationToken">Cancellation token for the operation.</param>
-        /// <returns>A list of files in the knowledge base.</returns>
-        [HttpGet("files/{knowledgeBaseId:guid}")]
-        public async Task<IActionResult> ListFiles(Guid knowledgeBaseId, CancellationToken cancellationToken)
+        /// <returns>A list of files in the library.</returns>
+        [HttpGet("files/{libraryId:guid}")]
+        public async Task<IActionResult> ListFiles(Guid libraryId, CancellationToken cancellationToken)
         {
             try
             {
@@ -215,17 +215,17 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
                 if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
                     return Unauthorized("Invalid user authentication");
 
-                IEnumerable<KnowledgeFileDto> files = await _fileStorageService.ListFilesAsync(knowledgeBaseId, userId, cancellationToken);
+                IEnumerable<LibraryFileDto> files = await _fileStorageService.ListFilesAsync(libraryId, userId, cancellationToken);
                 return Ok(files);
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogWarning(ex, "Unauthorized access attempt to list files in knowledge base {KnowledgeBaseId}", knowledgeBaseId);
-                return Forbid("Access denied. You don't have permission to list files in this knowledge base.");
+                _logger.LogWarning(ex, "Unauthorized access attempt to list files in library {LibraryId}", libraryId);
+                return Forbid("Access denied. You don't have permission to list files in this library.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to list files in knowledge base {KnowledgeBaseId}", knowledgeBaseId);
+                _logger.LogError(ex, "Failed to list files in library {LibraryId}", libraryId);
                 return StatusCode(500, "An error occurred while listing files");
             }
         }
@@ -233,12 +233,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         /// <summary>
         /// Gets information about a specific file.
         /// </summary>
-        /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="libraryId">The unique identifier for the library.</param>
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="cancellationToken">Cancellation token for the operation.</param>
         /// <returns>Information about the file.</returns>
-        [HttpGet("files/{knowledgeBaseId:guid}/{fileId:guid}")]
-        public async Task<IActionResult> GetFileInfo(Guid knowledgeBaseId, Guid fileId, CancellationToken cancellationToken)
+        [HttpGet("files/{libraryId:guid}/{fileId:guid}")]
+        public async Task<IActionResult> GetFileInfo(Guid libraryId, Guid fileId, CancellationToken cancellationToken)
         {
             try
             {
@@ -247,7 +247,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
                 if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
                     return Unauthorized("Invalid user authentication");
 
-                KnowledgeFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, userId, cancellationToken);
+                LibraryFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(libraryId, fileId, userId, cancellationToken);
                 if (fileInfo == null)
                     return NotFound("File not found");
 
@@ -255,25 +255,25 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogWarning(ex, "Unauthorized access attempt to file info {FileId} in knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                _logger.LogWarning(ex, "Unauthorized access attempt to file info {FileId} in library {LibraryId}", fileId, libraryId);
                 return Forbid("Access denied. You don't have permission to access this file.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to get file info for file {FileId} in knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                _logger.LogError(ex, "Failed to get file info for file {FileId} in library {LibraryId}", fileId, libraryId);
                 return StatusCode(500, "An error occurred while retrieving file information");
             }
         }
 
         /// <summary>
-        /// Downloads a file from the knowledge base.
+        /// Downloads a file from the library.
         /// </summary>
-        /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="libraryId">The unique identifier for the library.</param>
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="cancellationToken">Cancellation token for the operation.</param>
         /// <returns>The file content stream.</returns>
-        [HttpGet("download/{knowledgeBaseId:guid}/{fileId:guid}")]
-        public async Task<IActionResult> DownloadFile(Guid knowledgeBaseId, Guid fileId, CancellationToken cancellationToken)
+        [HttpGet("download/{libraryId:guid}/{fileId:guid}")]
+        public async Task<IActionResult> DownloadFile(Guid libraryId, Guid fileId, CancellationToken cancellationToken)
         {
             try
             {
@@ -282,17 +282,17 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
                 if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
                     return Unauthorized("Invalid user authentication");
 
-                KnowledgeFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, userId, cancellationToken);
+                LibraryFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(libraryId, fileId, userId, cancellationToken);
                 if (fileInfo == null)
                     return NotFound("File not found");
 
-                Stream fileStream = await _fileStorageService.GetFileStreamAsync(knowledgeBaseId, fileId, userId, cancellationToken);
-                
+                Stream fileStream = await _fileStorageService.GetFileStreamAsync(libraryId, fileId, userId, cancellationToken);
+
                 return File(fileStream, fileInfo.ContentType, fileInfo.OriginalFileName);
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogWarning(ex, "Unauthorized download attempt for file {FileId} in knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                _logger.LogWarning(ex, "Unauthorized download attempt for file {FileId} in library {LibraryId}", fileId, libraryId);
                 return Forbid("Access denied. You don't have permission to download this file.");
             }
             catch (FileNotFoundException)
@@ -301,20 +301,20 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to download file {FileId} from knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                _logger.LogError(ex, "Failed to download file {FileId} from library {LibraryId}", fileId, libraryId);
                 return StatusCode(500, "An error occurred while downloading the file");
             }
         }
 
         /// <summary>
-        /// Deletes a file from the knowledge base.
+        /// Deletes a file from the library.
         /// </summary>
-        /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="libraryId">The unique identifier for the library.</param>
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="cancellationToken">Cancellation token for the operation.</param>
         /// <returns>Confirmation of deletion.</returns>
-        [HttpDelete("files/{knowledgeBaseId:guid}/{fileId:guid}")]
-        public async Task<IActionResult> DeleteFile(Guid knowledgeBaseId, Guid fileId, CancellationToken cancellationToken)
+        [HttpDelete("files/{libraryId:guid}/{fileId:guid}")]
+        public async Task<IActionResult> DeleteFile(Guid libraryId, Guid fileId, CancellationToken cancellationToken)
         {
             try
             {
@@ -323,7 +323,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
                 if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
                     return Unauthorized("Invalid user authentication");
 
-                bool deleted = await _fileStorageService.DeleteFileAsync(knowledgeBaseId, fileId, userId, cancellationToken);
+                bool deleted = await _fileStorageService.DeleteFileAsync(libraryId, fileId, userId, cancellationToken);
                 if (!deleted)
                     return NotFound("File not found");
 
@@ -331,12 +331,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogWarning(ex, "Unauthorized delete attempt for file {FileId} in knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                _logger.LogWarning(ex, "Unauthorized delete attempt for file {FileId} in library {LibraryId}", fileId, libraryId);
                 return Forbid("Access denied. You don't have permission to delete this file.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to delete file {FileId} from knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                _logger.LogError(ex, "Failed to delete file {FileId} from library {LibraryId}", fileId, libraryId);
                 return StatusCode(500, "An error occurred while deleting the file");
             }
         }

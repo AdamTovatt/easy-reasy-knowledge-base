@@ -1,5 +1,4 @@
 using EasyReasy.EnvironmentVariables;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 {
@@ -16,7 +15,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             // Load environment variables from test configuration file
             EnvironmentVariableHelper.LoadVariablesFromFile("..\\..\\TestEnvironmentVariables.txt");
             EnvironmentVariableHelper.ValidateVariableNamesIn(typeof(PostgresTestEnvironmentVariables));
-            
+
             Console.WriteLine("PostgreSQL test environment variables loaded successfully.");
         }
     }

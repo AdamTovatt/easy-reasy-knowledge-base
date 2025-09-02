@@ -8,18 +8,18 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Storage
         /// <summary>
         /// Initializes a new instance of the <see cref="FileUploadRequest"/> class.
         /// </summary>
-        /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="libraryId">The unique identifier for the library.</param>
         /// <param name="file">The file to upload.</param>
-        public FileUploadRequest(Guid knowledgeBaseId, IFormFile file)
+        public FileUploadRequest(Guid libraryId, IFormFile file)
         {
-            KnowledgeBaseId = knowledgeBaseId;
+            LibraryId = libraryId;
             File = file ?? throw new ArgumentNullException(nameof(file));
         }
 
         /// <summary>
-        /// Gets the unique identifier for the knowledge base.
+        /// Gets the unique identifier for the library.
         /// </summary>
-        public Guid KnowledgeBaseId { get; }
+        public Guid LibraryId { get; }
 
         /// <summary>
         /// Gets the file to upload.

@@ -1,8 +1,5 @@
 using EasyReasy.KnowledgeBase.Models;
-using EasyReasy.KnowledgeBase.Storage.Postgres;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Data;
 
 namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 {
@@ -34,10 +31,10 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
                 _chunkStore = new PostgresChunkStore(_connectionFactory);
                 _sectionStore = new PostgresSectionStore(_connectionFactory, _chunkStore);
                 _knowledgeStore = new PostgresKnowledgeStore(_connectionFactory);
-                
+
                 // Create a simple logger for test output
                 _logger = TestDatabaseHelper.CreateLogger<TTestClass>();
-                
+
                 // Ensure database is clean and migrated
                 TestDatabaseHelper.SetupDatabase<TTestClass>();
             }
@@ -59,7 +56,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             _knowledgeStore = null!;
             _connectionFactory = null!;
             _logger = null!;
-            
+
             // Clean up the test database
             TestDatabaseHelper.CleanupDatabase<TTestClass>();
         }
@@ -90,7 +87,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 
             // Create the section first with a new ID
             Guid sectionId = Guid.NewGuid();
-            
+
             // Create chunk with the correct section ID
             KnowledgeFileChunk chunk = new KnowledgeFileChunk(
                 Guid.NewGuid(),

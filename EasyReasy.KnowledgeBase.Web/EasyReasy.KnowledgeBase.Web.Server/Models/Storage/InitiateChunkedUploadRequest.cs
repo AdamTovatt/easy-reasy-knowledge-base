@@ -8,19 +8,19 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Storage
         /// <summary>
         /// Initializes a new instance of the <see cref="InitiateChunkedUploadRequest"/> class.
         /// </summary>
-        /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="libraryId">The unique identifier for the library.</param>
         /// <param name="fileName">The name of the file to upload.</param>
         /// <param name="contentType">The MIME type of the file.</param>
         /// <param name="totalSize">The total size of the file in bytes.</param>
         /// <param name="chunkSize">The size of each chunk in bytes.</param>
         public InitiateChunkedUploadRequest(
-            Guid knowledgeBaseId,
+            Guid libraryId,
             string fileName,
             string contentType,
             long totalSize,
             int chunkSize)
         {
-            KnowledgeBaseId = knowledgeBaseId;
+            LibraryId = libraryId;
             FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
             ContentType = contentType ?? throw new ArgumentNullException(nameof(contentType));
             TotalSize = totalSize;
@@ -28,9 +28,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Storage
         }
 
         /// <summary>
-        /// Gets the unique identifier for the knowledge base.
+        /// Gets the unique identifier for the library.
         /// </summary>
-        public Guid KnowledgeBaseId { get; }
+        public Guid LibraryId { get; }
 
         /// <summary>
         /// Gets the name of the file to upload.

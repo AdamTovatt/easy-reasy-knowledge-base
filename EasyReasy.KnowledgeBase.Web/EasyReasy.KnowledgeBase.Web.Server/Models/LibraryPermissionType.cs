@@ -1,9 +1,9 @@
 namespace EasyReasy.KnowledgeBase.Web.Server.Models
 {
     /// <summary>
-    /// Represents the types of permissions that can be granted for a knowledge base.
+    /// Represents the types of permissions that can be granted for a library.
     /// </summary>
-    public enum KnowledgeBasePermissionType
+    public enum LibraryPermissionType
     {
         /// <summary>
         /// Read-only access to view files and download content.

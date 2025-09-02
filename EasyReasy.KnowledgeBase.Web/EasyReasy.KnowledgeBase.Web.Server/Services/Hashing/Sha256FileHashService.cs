@@ -38,7 +38,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Hashing
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"File not found: {filePath}");
 
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true))
+            using (FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true))
             {
                 return await ComputeHashAsync(fileStream, cancellationToken);
             }
@@ -56,6 +56,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Hashing
         /// <inheritdoc/>
         public byte[] FromHexString(string hexString)
         {
+            if (hexString == null)
+                throw new ArgumentException("Hex string cannot be null.", nameof(hexString));
+
+            if (hexString.Length == 0)
+                return Array.Empty<byte>();
+
             if (string.IsNullOrWhiteSpace(hexString))
                 throw new ArgumentException("Hex string cannot be null, empty, or whitespace.", nameof(hexString));
 

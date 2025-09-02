@@ -1,8 +1,6 @@
 using EasyReasy.EnvironmentVariables;
-using EasyReasy.Ollama.Client;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Linq;
+using EasyReasy.Ollama.Client;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Services.Ai
 {

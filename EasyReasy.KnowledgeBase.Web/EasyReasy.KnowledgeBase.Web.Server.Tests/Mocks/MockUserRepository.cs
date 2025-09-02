@@ -21,7 +21,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Tests.Mocks
 
             Guid id = Guid.NewGuid();
             DateTime now = DateTime.UtcNow;
-            
+
             User user = new User(
                 id,
                 email,

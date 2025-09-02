@@ -27,7 +27,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Auth
                 return null;
 
             // Get the user service from the HTTP context's service provider (scoped) or fall back to root provider
-            IUserService userService = httpContext?.RequestServices.GetRequiredService<IUserService>() 
+            IUserService userService = httpContext?.RequestServices.GetRequiredService<IUserService>()
                 ?? _serviceProvider.GetRequiredService<IUserService>();
 
             // Validate credentials using the user service

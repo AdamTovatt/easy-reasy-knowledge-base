@@ -1,25 +1,27 @@
+using EasyReasy.KnowledgeBase.Web.Server.ExtensionMethods;
+
 namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
 {
     /// <summary>
-    /// Information about a file stored in the knowledge base system.
+    /// Information about a file stored in the library system.
     /// </summary>
-    public class KnowledgeFileDto
+    public class LibraryFileDto
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="KnowledgeFileDto"/> class.
+        /// Initializes a new instance of the <see cref="LibraryFileDto"/> class.
         /// </summary>
         /// <param name="fileId">The unique identifier for the file.</param>
-        /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="libraryId">The unique identifier for the library.</param>
         /// <param name="originalFileName">The original name of the file.</param>
         /// <param name="contentType">The MIME type of the file.</param>
         /// <param name="sizeInBytes">The size of the file in bytes.</param>
         /// <param name="uploadedAt">The date and time when the file was uploaded.</param>
-        /// <param name="relativePath">The relative path to the file within the knowledge base.</param>
+        /// <param name="relativePath">The relative path to the file within the library.</param>
         /// <param name="hashHex">The SHA-256 hash of the file content as a hex string.</param>
         /// <param name="uploadedByUserId">The unique identifier of the user who uploaded the file.</param>
-        public KnowledgeFileDto(
+        public LibraryFileDto(
             Guid fileId,
-            Guid knowledgeBaseId,
+            Guid libraryId,
             string originalFileName,
             string contentType,
             long sizeInBytes,
@@ -29,7 +31,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
             Guid uploadedByUserId)
         {
             FileId = fileId;
-            KnowledgeBaseId = knowledgeBaseId;
+            LibraryId = libraryId;
             OriginalFileName = originalFileName ?? throw new ArgumentNullException(nameof(originalFileName));
             ContentType = contentType ?? throw new ArgumentNullException(nameof(contentType));
             SizeInBytes = sizeInBytes;
@@ -45,9 +47,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         public Guid FileId { get; }
 
         /// <summary>
-        /// Gets the unique identifier for the knowledge base.
+        /// Gets the unique identifier for the library.
         /// </summary>
-        public Guid KnowledgeBaseId { get; }
+        public Guid LibraryId { get; }
 
         /// <summary>
         /// Gets the original name of the file when it was uploaded.
@@ -70,7 +72,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         public DateTime UploadedAt { get; }
 
         /// <summary>
-        /// Gets the relative path to the file within the knowledge base.
+        /// Gets the relative path to the file within the library.
         /// </summary>
         public string RelativePath { get; }
 
@@ -87,18 +89,18 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         /// <summary>
         /// Gets a user-friendly display of the file size.
         /// </summary>
-        public string FormattedSize => FormatFileSize(SizeInBytes);
+        public string FormattedSize => SizeInBytes.ToFileSizeString();
 
         /// <summary>
-        /// Creates a KnowledgeFileDto instance from a KnowledgeFile model.
+        /// Creates a LibraryFileDto instance from a LibraryFile model.
         /// </summary>
-        /// <param name="file">The knowledge file model to convert.</param>
-        /// <returns>A KnowledgeFileDto instance.</returns>
-        public static KnowledgeFileDto FromFile(KnowledgeFile file)
+        /// <param name="file">The library file model to convert.</param>
+        /// <returns>A LibraryFileDto instance.</returns>
+        public static LibraryFileDto FromFile(LibraryFile file)
         {
-            return new KnowledgeFileDto(
+            return new LibraryFileDto(
                 fileId: file.Id,
-                knowledgeBaseId: file.KnowledgeBaseId,
+                libraryId: file.LibraryId,
                 originalFileName: file.OriginalFileName,
                 contentType: file.ContentType,
                 sizeInBytes: file.SizeInBytes,
@@ -107,24 +109,6 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
                 hashHex: Convert.ToHexString(file.Hash),
                 uploadedByUserId: file.UploadedByUserId
             );
-        }
-
-        private static string FormatFileSize(long sizeInBytes)
-        {
-            if (sizeInBytes == 0)
-                return "0 B";
-
-            string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
-            int suffixIndex = 0;
-            double size = sizeInBytes;
-
-            while (size >= 1024 && suffixIndex < suffixes.Length - 1)
-            {
-                size /= 1024;
-                suffixIndex++;
-            }
-
-            return $"{size:0.##} {suffixes[suffixIndex]}";
         }
     }
 }

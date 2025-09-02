@@ -1,12 +1,12 @@
+using EasyReasy.Auth;
 using EasyReasy.EnvironmentVariables;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
 using EasyReasy.KnowledgeBase.Web.Server.Models;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Ai;
 using EasyReasy.Ollama.Client;
 using EasyReasy.Ollama.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using EasyReasy.Auth;
-using EasyReasy.KnowledgeBase.Web.Server.Services.Ai;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
 {
@@ -68,7 +68,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
             {
                 // Service became unavailable during streaming - refresh provider status
                 await _ollamaClientProvider.RefreshAsync();
-                
+
                 // Return the same 503 response as if the service was unavailable from the start
                 return StatusCode(503, new { error = "AI service is currently unavailable", details = httpException.Message });
             }

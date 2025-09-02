@@ -13,7 +13,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Storage
         /// <param name="success">Whether the upload was successful.</param>
         /// <param name="message">A message describing the result.</param>
         /// <param name="fileInfo">Information about the uploaded file, if successful.</param>
-        public FileUploadResponse(bool success, string message, KnowledgeFileDto? fileInfo = null)
+        public FileUploadResponse(bool success, string message, LibraryFileDto? fileInfo = null)
         {
             Success = success;
             Message = message ?? throw new ArgumentNullException(nameof(message));
@@ -33,6 +33,6 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Storage
         /// <summary>
         /// Gets information about the uploaded file, if the upload was successful.
         /// </summary>
-        public KnowledgeFileDto? FileInfo { get; }
+        public LibraryFileDto? FileInfo { get; }
     }
 }

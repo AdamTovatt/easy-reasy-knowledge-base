@@ -1,6 +1,6 @@
+using EasyReasy.Auth;
 using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.KnowledgeBase.Web.Server.Repositories;
-using EasyReasy.Auth;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Services.Account
 {

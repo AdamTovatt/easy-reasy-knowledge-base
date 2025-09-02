@@ -38,7 +38,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Database
         /// <returns>A new opened PostgreSQL database connection.</returns>
         public async Task<IDbConnection> CreateOpenConnectionAsync(CancellationToken cancellationToken = default)
         {
-            NpgsqlConnection connection = new NpgsqlConnection(_connectionString);
+            NpgsqlConnection connection = new(_connectionString);
             await connection.OpenAsync(cancellationToken);
             return connection;
         }

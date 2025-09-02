@@ -9,7 +9,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
         /// Gets or sets the message content to send to the AI service.
         /// </summary>
         public string Message { get; set; }
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="StreamChatRequest"/> class with the specified message.
         /// </summary>

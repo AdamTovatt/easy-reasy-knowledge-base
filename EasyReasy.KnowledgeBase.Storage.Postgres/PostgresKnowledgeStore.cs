@@ -1,5 +1,3 @@
-using EasyReasy.KnowledgeBase.Storage;
-
 namespace EasyReasy.KnowledgeBase.Storage.Postgres
 {
     /// <summary>

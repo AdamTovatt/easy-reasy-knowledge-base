@@ -1,28 +1,28 @@
-using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.KnowledgeBase.Storage;
+using EasyReasy.KnowledgeBase.Web.Server.Models;
 using Npgsql;
 using System.Data;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 {
     /// <summary>
-    /// Implements knowledge base data access operations using PostgreSQL.
+    /// Implements library data access operations using PostgreSQL.
     /// </summary>
-    public class KnowledgeBaseRepository : IKnowledgeBaseRepository
+    public class LibraryRepository : ILibraryRepository
     {
         private readonly IDbConnectionFactory _connectionFactory;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="KnowledgeBaseRepository"/> class.
+        /// Initializes a new instance of the <see cref="LibraryRepository"/> class.
         /// </summary>
         /// <param name="connectionFactory">The database connection factory.</param>
-        public KnowledgeBaseRepository(IDbConnectionFactory connectionFactory)
+        public LibraryRepository(IDbConnectionFactory connectionFactory)
         {
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
         /// <inheritdoc/>
-        public async Task<Models.KnowledgeBase> CreateAsync(string name, string? description, Guid ownerId, bool isPublic = false)
+        public async Task<Library> CreateAsync(string name, string? description, Guid ownerId, bool isPublic = false)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Knowledge base name cannot be null, empty, or whitespace.", nameof(name));
@@ -37,7 +37,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         RETURNING id, name, description, owner_id, is_public, created_at, updated_at";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-                    using (NpgsqlCommand command = new NpgsqlCommand(insertKnowledgeBaseSql, npgsqlConnection))
+                    using (NpgsqlCommand command = new(insertKnowledgeBaseSql, npgsqlConnection))
                     {
                         command.Parameters.AddWithValue("@name", name);
                         command.Parameters.AddWithValue("@description", (object?)description ?? DBNull.Value);
@@ -48,10 +48,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         {
                             if (!await reader.ReadAsync())
                             {
-                                throw new InvalidOperationException("Failed to create knowledge base record");
+                                throw new InvalidOperationException("Failed to create library record");
                             }
 
-                            return new Models.KnowledgeBase(
+                            return new Library(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
                                 name: reader.GetString(reader.GetOrdinal("name")),
                                 description: reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
@@ -68,7 +68,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     switch (ex.SqlState)
                     {
                         case "23505": // unique_violation
-                            throw new InvalidOperationException($"A knowledge base with the name '{name}' already exists.", ex);
+                            throw new InvalidOperationException($"A library with the name '{name}' already exists.", ex);
                         case "23503": // foreign_key_violation
                             throw new InvalidOperationException("Referenced user does not exist.", ex);
                         case "22001": // string_data_right_truncation
@@ -81,7 +81,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<Models.KnowledgeBase?> GetByIdAsync(Guid id)
+        public async Task<Library?> GetByIdAsync(Guid id)
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
@@ -90,7 +90,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<Models.KnowledgeBase?> GetByNameAsync(string name)
+        public async Task<Library?> GetByNameAsync(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 return null;
@@ -102,7 +102,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<Models.KnowledgeBase> UpdateAsync(Models.KnowledgeBase knowledgeBase)
+        public async Task<Library> UpdateAsync(Library knowledgeBase)
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
@@ -115,7 +115,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         RETURNING id, name, description, owner_id, is_public, created_at, updated_at";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-                    using (NpgsqlCommand command = new NpgsqlCommand(updateKnowledgeBaseSql, npgsqlConnection))
+                    using (NpgsqlCommand command = new(updateKnowledgeBaseSql, npgsqlConnection))
                     {
                         command.Parameters.AddWithValue("@id", knowledgeBase.Id);
                         command.Parameters.AddWithValue("@name", knowledgeBase.Name);
@@ -130,7 +130,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 throw new InvalidOperationException($"Knowledge base with ID {knowledgeBase.Id} not found");
                             }
 
-                            return new Models.KnowledgeBase(
+                            return new Library(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
                                 name: reader.GetString(reader.GetOrdinal("name")),
                                 description: reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
@@ -147,7 +147,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     switch (ex.SqlState)
                     {
                         case "23505": // unique_violation
-                            throw new InvalidOperationException($"A knowledge base with the name '{knowledgeBase.Name}' already exists.", ex);
+                            throw new InvalidOperationException($"A library with the name '{knowledgeBase.Name}' already exists.", ex);
                         case "23503": // foreign_key_violation
                             throw new InvalidOperationException("Referenced user does not exist.", ex);
                         case "22001": // string_data_right_truncation
@@ -171,7 +171,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         WHERE id = @id";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-                    using (NpgsqlCommand command = new NpgsqlCommand(deleteKnowledgeBaseSql, npgsqlConnection))
+                    using (NpgsqlCommand command = new(deleteKnowledgeBaseSql, npgsqlConnection))
                     {
                         command.Parameters.AddWithValue("@id", id);
                         int rowsAffected = await command.ExecuteNonQueryAsync();
@@ -183,7 +183,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     switch (ex.SqlState)
                     {
                         case "23503": // foreign_key_violation
-                            throw new InvalidOperationException("Cannot delete knowledge base due to existing references.", ex);
+                            throw new InvalidOperationException("Cannot delete library due to existing references.", ex);
                         default:
                             throw new InvalidOperationException($"Database error: {ex.Message}", ex);
                     }
@@ -192,20 +192,20 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<List<Models.KnowledgeBase>> GetByOwnerIdAsync(Guid ownerId)
+        public async Task<List<Library>> GetByOwnerIdAsync(Guid ownerId)
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                return await GetKnowledgeBasesByParameterAsync("owner_id", ownerId, connection);
+                return await GetLibrariesByParameterAsync("owner_id", ownerId, connection);
             }
         }
 
         /// <inheritdoc/>
-        public async Task<List<Models.KnowledgeBase>> GetPublicKnowledgeBasesAsync()
+        public async Task<List<Library>> GetPublicLibrariesAsync()
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                return await GetKnowledgeBasesByParameterAsync("is_public", true, connection);
+                return await GetLibrariesByParameterAsync("is_public", true, connection);
             }
         }
 
@@ -220,7 +220,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     WHERE id = @id";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-                using (NpgsqlCommand command = new NpgsqlCommand(existsSql, npgsqlConnection))
+                using (NpgsqlCommand command = new(existsSql, npgsqlConnection))
                 {
                     command.Parameters.AddWithValue("@id", id);
                     object? result = await command.ExecuteScalarAsync();
@@ -231,19 +231,19 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<bool> IsOwnerAsync(Guid knowledgeBaseId, Guid userId)
+        public async Task<bool> IsOwnerAsync(Guid libraryId, Guid userId)
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string isOwnerSql = @"
                     SELECT COUNT(1)
                     FROM knowledge_base
-                    WHERE id = @knowledgeBaseId AND owner_id = @userId";
+                    WHERE id = @libraryId AND owner_id = @userId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-                using (NpgsqlCommand command = new NpgsqlCommand(isOwnerSql, npgsqlConnection))
+                using (NpgsqlCommand command = new(isOwnerSql, npgsqlConnection))
                 {
-                    command.Parameters.AddWithValue("@knowledgeBaseId", knowledgeBaseId);
+                    command.Parameters.AddWithValue("@libraryId", libraryId);
                     command.Parameters.AddWithValue("@userId", userId);
                     object? result = await command.ExecuteScalarAsync();
                     long count = result == null ? 0 : (long)result;
@@ -252,7 +252,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             }
         }
 
-        private async Task<Models.KnowledgeBase?> GetKnowledgeBaseByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
+        private async Task<Library?> GetKnowledgeBaseByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getKnowledgeBaseSql = $@"
                 SELECT id, name, description, owner_id, is_public, created_at, updated_at
@@ -260,7 +260,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 WHERE {parameterName} = @{parameterName}";
 
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-            using (NpgsqlCommand command = new NpgsqlCommand(getKnowledgeBaseSql, npgsqlConnection))
+            using (NpgsqlCommand command = new(getKnowledgeBaseSql, npgsqlConnection))
             {
                 command.Parameters.AddWithValue($"@{parameterName}", (object?)parameterValue ?? DBNull.Value);
 
@@ -268,7 +268,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 {
                     if (await reader.ReadAsync())
                     {
-                        return new Models.KnowledgeBase(
+                        return new Library(
                             id: reader.GetGuid(reader.GetOrdinal("id")),
                             name: reader.GetString(reader.GetOrdinal("name")),
                             description: reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
@@ -283,17 +283,17 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             }
         }
 
-        private async Task<List<Models.KnowledgeBase>> GetKnowledgeBasesByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
+        private async Task<List<Library>> GetLibrariesByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
-            string getKnowledgeBasesSql = $@"
+            string getLibrariesSql = $@"
                 SELECT id, name, description, owner_id, is_public, created_at, updated_at
                 FROM knowledge_base
                 WHERE {parameterName} = @{parameterName}
                 ORDER BY created_at DESC";
 
-            List<Models.KnowledgeBase> knowledgeBases = new List<Models.KnowledgeBase>();
+            List<Library> libraries = new();
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
-            using (NpgsqlCommand command = new NpgsqlCommand(getKnowledgeBasesSql, npgsqlConnection))
+            using (NpgsqlCommand command = new(getLibrariesSql, npgsqlConnection))
             {
                 command.Parameters.AddWithValue($"@{parameterName}", (object?)parameterValue ?? DBNull.Value);
 
@@ -301,7 +301,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 {
                     while (await reader.ReadAsync())
                     {
-                        knowledgeBases.Add(new Models.KnowledgeBase(
+                        libraries.Add(new Library(
                             id: reader.GetGuid(reader.GetOrdinal("id")),
                             name: reader.GetString(reader.GetOrdinal("name")),
                             description: reader.IsDBNull(reader.GetOrdinal("description")) ? null : reader.GetString(reader.GetOrdinal("description")),
@@ -314,7 +314,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 }
             }
 
-            return knowledgeBases;
+            return libraries;
         }
     }
 }

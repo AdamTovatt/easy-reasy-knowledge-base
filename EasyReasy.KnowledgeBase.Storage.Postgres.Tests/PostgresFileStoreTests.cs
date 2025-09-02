@@ -1,6 +1,4 @@
 using EasyReasy.KnowledgeBase.Models;
-using EasyReasy.KnowledgeBase.Storage.Postgres;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 {
@@ -145,7 +143,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             // Arrange
             KnowledgeFile file1 = new KnowledgeFile(Guid.NewGuid(), "test1.txt", new byte[] { 1, 2, 3, 4 });
             KnowledgeFile file2 = new KnowledgeFile(Guid.NewGuid(), "test2.txt", new byte[] { 5, 6, 7, 8 });
-            
+
             await _fileStore.AddAsync(file1);
             await _fileStore.AddAsync(file2);
 
@@ -238,7 +236,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
             {
                 ProcessedAt = DateTime.UtcNow
             };
-            
+
             await _fileStore.AddAsync(file1);
             await _fileStore.AddAsync(file2);
 

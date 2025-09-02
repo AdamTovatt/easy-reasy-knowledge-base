@@ -1,5 +1,5 @@
-using System.Text.Json;
 using EasyReasy.KnowledgeBase.Web.Server.Configuration;
+using System.Text.Json;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Models
 {
@@ -12,7 +12,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
         /// Gets or sets the message content from the AI service, or null if there was an error.
         /// </summary>
         public string? Message { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the error message if the request failed, or null if successful.
         /// </summary>

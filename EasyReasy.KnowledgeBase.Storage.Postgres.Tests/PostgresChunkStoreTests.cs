@@ -1,6 +1,4 @@
 using EasyReasy.KnowledgeBase.Models;
-using EasyReasy.KnowledgeBase.Storage.Postgres;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 {
@@ -410,7 +408,7 @@ namespace EasyReasy.KnowledgeBase.Storage.Postgres.Tests
 
             KnowledgeFileSection section = await CreateValidSectionAsync(file.Id, 0);
             await _sectionStore.AddAsync(section);
-            
+
             foreach (KnowledgeFileChunk chunk in section.Chunks)
             {
                 await _chunkStore.AddAsync(chunk);

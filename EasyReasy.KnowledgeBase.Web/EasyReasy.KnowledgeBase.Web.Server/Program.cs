@@ -1,15 +1,15 @@
-using EasyReasy.EnvironmentVariables;
-using EasyReasy.KnowledgeBase.Web.Server.Configuration;
-using EasyReasy.KnowledgeBase.Web.Server.Repositories;
-using EasyReasy.KnowledgeBase.Web.Server.Database;
-using EasyReasy.KnowledgeBase.Storage;
 using EasyReasy.Auth;
-using Microsoft.AspNetCore.Http.Json;
-using EasyReasy.KnowledgeBase.Web.Server.Services.Auth;
-using EasyReasy.KnowledgeBase.Web.Server.Services.Account;
-using EasyReasy.KnowledgeBase.Web.Server.Services.Storage;
-using EasyReasy.KnowledgeBase.Web.Server.Services.Hashing;
+using EasyReasy.EnvironmentVariables;
 using EasyReasy.FileStorage;
+using EasyReasy.KnowledgeBase.Storage;
+using EasyReasy.KnowledgeBase.Web.Server.Configuration;
+using EasyReasy.KnowledgeBase.Web.Server.Database;
+using EasyReasy.KnowledgeBase.Web.Server.Repositories;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Account;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Auth;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Hashing;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Storage;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace EasyReasy.KnowledgeBase.Web.Server
@@ -50,9 +50,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server
 
             // Register repositories
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IKnowledgeFileRepository, KnowledgeFileRepository>();
-            builder.Services.AddScoped<IKnowledgeBaseRepository, KnowledgeBaseRepository>();
-            builder.Services.AddScoped<IKnowledgeBasePermissionRepository, KnowledgeBasePermissionRepository>();
+            builder.Services.AddScoped<ILibraryFileRepository, LibraryFileRepository>();
+            builder.Services.AddScoped<ILibraryRepository, LibraryRepository>();
+            builder.Services.AddScoped<ILibraryPermissionRepository, LibraryPermissionRepository>();
 
             // Register file storage system
             string fileStorageBasePath = EnvironmentVariable.FileStorageBasePath.GetValue();
@@ -71,13 +71,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server
 
             // Register services
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IKnowledgeBaseAuthorizationService, KnowledgeBaseAuthorizationService>();
+            builder.Services.AddScoped<ILibraryAuthorizationService, LibraryAuthorizationService>();
             builder.Services.AddScoped<IFileHashService, Sha256FileHashService>();
-            builder.Services.AddScoped<IFileStorageService>(serviceProvider => 
+            builder.Services.AddScoped<IFileStorageService>(serviceProvider =>
                 new FileStorageService(
                     serviceProvider.GetRequiredService<IFileSystem>(),
-                    serviceProvider.GetRequiredService<IKnowledgeFileRepository>(),
-                    serviceProvider.GetRequiredService<IKnowledgeBaseAuthorizationService>(),
+                    serviceProvider.GetRequiredService<ILibraryFileRepository>(),
+                    serviceProvider.GetRequiredService<ILibraryAuthorizationService>(),
                     serviceProvider.GetRequiredService<IFileHashService>(),
                     serviceProvider.GetRequiredService<IMemoryCache>(),
                     maxFileSizeBytes,
