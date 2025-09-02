@@ -19,6 +19,10 @@ OLLAMA_REASONING_TEXT_COMPLETION_MODEL_NAME=test_reasoning_model
 # JWT Configuration
 JWT_SIGNING_SECRET=test-jwt-signing-secret-at-least-32-characters-long
 
+# File Storage Configuration
+FILE_STORAGE_BASE_PATH=./test_uploads
+MAX_FILE_SIZE_BYTES=104857600
+
 # Logging Configuration
 LOG_LEVEL=Information
 

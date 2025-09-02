@@ -16,6 +16,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="TestFiles\small-test.txt" />
+    <EmbeddedResource Include="TestFiles\medium-test.txt" />
+    <EmbeddedResource Include="TestFiles\sample.json" />
+    <EmbeddedResource Include="TestFiles\document.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EasyReasy.FileStorage" Version="1.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.12.6" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="1.4.3" />
@@ -24,6 +32,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.19" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
+    <PackageReference Include="EasyReasy" Version="1.0.2" />
     <PackageReference Include="EasyReasy.EnvironmentVariables" Version="1.2.2" />
     <PackageReference Include="Npgsql" Version="9.0.3" />
     <PackageReference Include="dbup-postgresql" Version="6.0.3" />

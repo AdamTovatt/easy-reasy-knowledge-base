@@ -1,0 +1,33 @@
+{
+  "name": "Integration Test Sample",
+  "version": "1.0.0",
+  "description": "A sample JSON file for testing file upload functionality",
+  "features": [
+    "File upload testing",
+    "Content type validation",
+    "Multi-format support"
+  ],
+  "metadata": {
+    "created": "2024-01-15",
+    "author": "Integration Test Suite",
+    "tags": ["test", "integration", "json", "file-upload"]
+  },
+  "configuration": {
+    "maxFileSize": "100MB",
+    "allowedTypes": ["json", "txt", "md", "pdf"],
+    "chunkSize": 1024,
+    "timeout": 30000
+  },
+  "testData": {
+    "sampleText": "This JSON contains various data types for comprehensive testing",
+    "numbers": [1, 2, 3, 42, 100],
+    "boolean": true,
+    "nested": {
+      "level1": {
+        "level2": {
+          "value": "Deep nesting test"
+        }
+      }
+    }
+  }
+}
