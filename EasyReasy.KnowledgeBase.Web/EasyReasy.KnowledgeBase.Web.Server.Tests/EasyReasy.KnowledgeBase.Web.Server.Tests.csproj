@@ -46,4 +46,8 @@
     <ProjectReference Include="..\EasyReasy.KnowledgeBase.Web.Server\EasyReasy.KnowledgeBase.Web.Server.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
 </Project>
