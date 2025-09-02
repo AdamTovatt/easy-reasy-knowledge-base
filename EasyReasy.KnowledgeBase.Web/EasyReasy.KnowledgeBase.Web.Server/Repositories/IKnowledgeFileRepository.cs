@@ -15,6 +15,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="contentType">The MIME type of the file.</param>
         /// <param name="sizeInBytes">The size of the file in bytes.</param>
         /// <param name="relativePath">The relative path to the file.</param>
+        /// <param name="hash">The SHA-256 hash of the file content.</param>
         /// <param name="uploadedByUserId">The unique identifier of the user who uploaded the file.</param>
         /// <returns>The created file record with populated ID and timestamps.</returns>
         Task<KnowledgeFile> CreateAsync(
@@ -23,6 +24,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             string contentType,
             long sizeInBytes,
             string relativePath,
+            byte[] hash,
             Guid uploadedByUserId);
 
         /// <summary>

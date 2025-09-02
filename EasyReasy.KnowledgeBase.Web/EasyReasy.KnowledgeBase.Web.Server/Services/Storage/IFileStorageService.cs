@@ -77,11 +77,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="fileId">The unique identifier for the file.</param>
+        /// <param name="userId">The unique identifier of the user requesting access.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>Information about the stored file, or null if not found.</returns>
         Task<KnowledgeFileDto?> GetFileInfoAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -89,11 +91,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="fileId">The unique identifier for the file.</param>
+        /// <param name="userId">The unique identifier of the user requesting access.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>A stream to read the file content.</returns>
         Task<Stream> GetFileStreamAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -101,11 +105,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="fileId">The unique identifier for the file.</param>
+        /// <param name="userId">The unique identifier of the user requesting access.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>The file content as text.</returns>
         Task<string> GetFileContentAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -113,21 +119,25 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="fileId">The unique identifier for the file.</param>
+        /// <param name="userId">The unique identifier of the user requesting the deletion.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>True if the file was deleted, false if it didn't exist.</returns>
         Task<bool> DeleteFileAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Lists all files in a knowledge base.
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="userId">The unique identifier of the user requesting the file list.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>A collection of file information objects.</returns>
         Task<IEnumerable<KnowledgeFileDto>> ListFilesAsync(
-            Guid knowledgeBaseId, 
+            Guid knowledgeBaseId,
+            Guid userId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -135,11 +145,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="fileId">The unique identifier for the file.</param>
+        /// <param name="userId">The unique identifier of the user checking file existence.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>True if the file exists, false otherwise.</returns>
         Task<bool> FileExistsAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -155,10 +167,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// Deletes an entire knowledge base and all its files.
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
+        /// <param name="userId">The unique identifier of the user requesting the deletion (must have admin permission).</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>True if the knowledge base was deleted, false if it didn't exist.</returns>
         Task<bool> DeleteKnowledgeBaseAsync(
-            Guid knowledgeBaseId, 
+            Guid knowledgeBaseId,
+            Guid userId,
             CancellationToken cancellationToken = default);
     }
 }

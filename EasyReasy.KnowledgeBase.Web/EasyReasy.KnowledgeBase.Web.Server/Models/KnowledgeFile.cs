@@ -36,6 +36,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
         public string RelativePath { get; set; }
         
         /// <summary>
+        /// Gets or sets the SHA-256 hash of the file content.
+        /// </summary>
+        public byte[] Hash { get; set; }
+        
+        /// <summary>
         /// Gets or sets the unique identifier of the user who uploaded the file.
         /// </summary>
         public Guid UploadedByUserId { get; set; }
@@ -64,6 +69,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
         /// <param name="contentType">The MIME type of the file.</param>
         /// <param name="sizeInBytes">The size of the file in bytes.</param>
         /// <param name="relativePath">The relative path to the file.</param>
+        /// <param name="hash">The SHA-256 hash of the file content.</param>
         /// <param name="uploadedByUserId">The unique identifier of the user who uploaded the file.</param>
         /// <param name="uploadedAt">The timestamp when the file was uploaded.</param>
         /// <param name="createdAt">The timestamp when the file record was created.</param>
@@ -75,6 +81,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
             string contentType,
             long sizeInBytes,
             string relativePath,
+            byte[] hash,
             Guid uploadedByUserId,
             DateTime uploadedAt,
             DateTime createdAt,
@@ -86,6 +93,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
             ContentType = contentType;
             SizeInBytes = sizeInBytes;
             RelativePath = relativePath;
+            Hash = hash;
             UploadedByUserId = uploadedByUserId;
             UploadedAt = uploadedAt;
             CreatedAt = createdAt;

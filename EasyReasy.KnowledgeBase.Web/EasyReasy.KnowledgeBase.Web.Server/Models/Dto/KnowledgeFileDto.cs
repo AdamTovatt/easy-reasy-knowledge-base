@@ -15,6 +15,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         /// <param name="sizeInBytes">The size of the file in bytes.</param>
         /// <param name="uploadedAt">The date and time when the file was uploaded.</param>
         /// <param name="relativePath">The relative path to the file within the knowledge base.</param>
+        /// <param name="hashHex">The SHA-256 hash of the file content as a hex string.</param>
         /// <param name="uploadedByUserId">The unique identifier of the user who uploaded the file.</param>
         public KnowledgeFileDto(
             Guid fileId,
@@ -24,6 +25,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
             long sizeInBytes,
             DateTime uploadedAt,
             string relativePath,
+            string hashHex,
             Guid uploadedByUserId)
         {
             FileId = fileId;
@@ -33,6 +35,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
             SizeInBytes = sizeInBytes;
             UploadedAt = uploadedAt;
             RelativePath = relativePath ?? throw new ArgumentNullException(nameof(relativePath));
+            HashHex = hashHex ?? throw new ArgumentNullException(nameof(hashHex));
             UploadedByUserId = uploadedByUserId;
         }
 
@@ -72,6 +75,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         public string RelativePath { get; }
 
         /// <summary>
+        /// Gets the SHA-256 hash of the file content as a hex string.
+        /// </summary>
+        public string HashHex { get; }
+
+        /// <summary>
         /// Gets the unique identifier of the user who uploaded the file.
         /// </summary>
         public Guid UploadedByUserId { get; }
@@ -96,6 +104,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
                 sizeInBytes: file.SizeInBytes,
                 uploadedAt: file.UploadedAt,
                 relativePath: file.RelativePath,
+                hashHex: Convert.ToHexString(file.Hash),
                 uploadedByUserId: file.UploadedByUserId
             );
         }

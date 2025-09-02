@@ -3,6 +3,8 @@ using EasyReasy.KnowledgeBase.Web.Server.Models;
 using EasyReasy.KnowledgeBase.Web.Server.Models.Dto;
 using EasyReasy.KnowledgeBase.Web.Server.Models.Storage;
 using EasyReasy.KnowledgeBase.Web.Server.Repositories;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Auth;
+using EasyReasy.KnowledgeBase.Web.Server.Services.Hashing;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
@@ -14,6 +16,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
     {
         private readonly IFileSystem _fileSystem;
         private readonly IKnowledgeFileRepository _fileRepository;
+        private readonly IKnowledgeBaseAuthorizationService _authorizationService;
+        private readonly IFileHashService _fileHashService;
         private readonly IMemoryCache _sessionCache;
         private readonly ILogger<FileStorageService> _logger;
         private readonly long _maxFileSizeBytes;
@@ -25,18 +29,24 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// </summary>
         /// <param name="fileSystem">The file system for storage operations.</param>
         /// <param name="fileRepository">The repository for file metadata operations.</param>
+        /// <param name="authorizationService">The service for handling knowledge base authorization.</param>
+        /// <param name="fileHashService">The service for computing file hashes.</param>
         /// <param name="sessionCache">The memory cache for upload session management.</param>
         /// <param name="maxFileSizeBytes">The maximum file size in bytes that can be uploaded.</param>
         /// <param name="logger">The logger for logging operations.</param>
         public FileStorageService(
             IFileSystem fileSystem, 
             IKnowledgeFileRepository fileRepository,
+            IKnowledgeBaseAuthorizationService authorizationService,
+            IFileHashService fileHashService,
             IMemoryCache sessionCache,
             long maxFileSizeBytes,
             ILogger<FileStorageService> logger)
         {
             _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
             _fileRepository = fileRepository ?? throw new ArgumentNullException(nameof(fileRepository));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
+            _fileHashService = fileHashService ?? throw new ArgumentNullException(nameof(fileHashService));
             _sessionCache = sessionCache ?? throw new ArgumentNullException(nameof(sessionCache));
             _maxFileSizeBytes = maxFileSizeBytes > 0 ? maxFileSizeBytes : throw new ArgumentException("Max file size must be greater than zero.", nameof(maxFileSizeBytes));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -69,6 +79,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 
             try
             {
+                // Check write permission for the knowledge base
+                await _authorizationService.ValidateAccessAsync(uploadedByUserId, knowledgeBaseId, KnowledgeBasePermissionType.Write, "initiate file upload");
+
                 // Ensure the knowledge base directory exists
                 await EnsureKnowledgeBaseExistsAsync(knowledgeBaseId, cancellationToken);
 
@@ -212,6 +225,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                     throw new InvalidOperationException($"File size mismatch after assembly. Expected {session.TotalSize} bytes, got {finalFileSize} bytes.");
                 }
 
+                // Compute hash of the final file
+                byte[] fileHash;
+                using (Stream fileStream = await _fileSystem.OpenFileForReadingAsync(finalPath, cancellationToken))
+                {
+                    fileHash = await _fileHashService.ComputeHashAsync(fileStream, cancellationToken);
+                }
+
                 // Store file metadata in database
                 KnowledgeFile fileRecord = await _fileRepository.CreateAsync(
                     knowledgeBaseId: session.KnowledgeBaseId,
@@ -219,6 +239,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                     contentType: session.ContentType,
                     sizeInBytes: finalFileSize,
                     relativePath: finalPath,
+                    hash: fileHash,
                     uploadedByUserId: session.UploadedByUserId
                 );
 
@@ -297,13 +318,21 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <inheritdoc/>
         public async Task<KnowledgeFileDto?> GetFileInfoAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default)
         {
             try
             {
+                // Check read permission for the knowledge base
+                await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "access file information");
+
                 KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
                 return file == null ? null : KnowledgeFileDto.FromFile(file);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw; // Re-throw authorization exceptions
             }
             catch (Exception ex)
             {
@@ -316,9 +345,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <inheritdoc/>
         public async Task<Stream> GetFileStreamAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default)
         {
+            // Check read permission for the knowledge base
+            await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "access file content");
+
             KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
             if (file == null)
                 throw new FileNotFoundException($"File {fileId} not found in knowledge base {knowledgeBaseId}");
@@ -329,9 +362,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <inheritdoc/>
         public async Task<string> GetFileContentAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default)
         {
+            // Check read permission for the knowledge base
+            await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "access file content");
+
             KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
             if (file == null)
                 throw new FileNotFoundException($"File {fileId} not found in knowledge base {knowledgeBaseId}");
@@ -342,11 +379,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <inheritdoc/>
         public async Task<bool> DeleteFileAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default)
         {
             try
             {
+                // Check write permission for the knowledge base (users can delete files with write permission)
+                await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Write, "delete file");
+
                 KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
                 if (file == null)
                     return false;
@@ -368,6 +409,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 
                 return deleted;
             }
+            catch (UnauthorizedAccessException)
+            {
+                throw; // Re-throw authorization exceptions
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to delete file {FileId} from knowledge base {KnowledgeBaseId}", 
@@ -378,13 +423,21 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 
         /// <inheritdoc/>
         public async Task<IEnumerable<KnowledgeFileDto>> ListFilesAsync(
-            Guid knowledgeBaseId, 
+            Guid knowledgeBaseId,
+            Guid userId,
             CancellationToken cancellationToken = default)
         {
             try
             {
+                // Check read permission for the knowledge base
+                await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "list files");
+
                 List<KnowledgeFile> files = await _fileRepository.GetByKnowledgeBaseIdAsync(knowledgeBaseId);
                 return files.Select(KnowledgeFileDto.FromFile).ToList();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw; // Re-throw authorization exceptions
             }
             catch (Exception ex)
             {
@@ -396,9 +449,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <inheritdoc/>
         public async Task<bool> FileExistsAsync(
             Guid knowledgeBaseId, 
-            Guid fileId, 
+            Guid fileId,
+            Guid userId,
             CancellationToken cancellationToken = default)
         {
+            // Check read permission for the knowledge base
+            await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Read, "check file existence");
+
             return await _fileRepository.ExistsInKnowledgeBaseAsync(knowledgeBaseId, fileId);
         }
 
@@ -418,11 +475,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 
         /// <inheritdoc/>
         public async Task<bool> DeleteKnowledgeBaseAsync(
-            Guid knowledgeBaseId, 
+            Guid knowledgeBaseId,
+            Guid userId,
             CancellationToken cancellationToken = default)
         {
             try
             {
+                // Check admin permission for the knowledge base (only admins can delete entire knowledge bases)
+                await _authorizationService.ValidateAccessAsync(userId, knowledgeBaseId, KnowledgeBasePermissionType.Admin, "delete knowledge base");
+
                 // Delete all file records from database
                 int deletedRecords = await _fileRepository.DeleteByKnowledgeBaseIdAsync(knowledgeBaseId);
 
@@ -439,6 +500,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                     knowledgeBaseId, deletedRecords);
                 
                 return hadFiles;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw; // Re-throw authorization exceptions
             }
             catch (Exception ex)
             {

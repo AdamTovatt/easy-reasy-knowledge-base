@@ -210,8 +210,18 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                IEnumerable<KnowledgeFileDto> files = await _fileStorageService.ListFilesAsync(knowledgeBaseId, cancellationToken);
+                // Get user ID from JWT token
+                string? userIdString = HttpContext.GetUserId();
+                if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+                    return Unauthorized("Invalid user authentication");
+
+                IEnumerable<KnowledgeFileDto> files = await _fileStorageService.ListFilesAsync(knowledgeBaseId, userId, cancellationToken);
                 return Ok(files);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized access attempt to list files in knowledge base {KnowledgeBaseId}", knowledgeBaseId);
+                return Forbid("Access denied. You don't have permission to list files in this knowledge base.");
             }
             catch (Exception ex)
             {
@@ -232,11 +242,21 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                KnowledgeFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, cancellationToken);
+                // Get user ID from JWT token
+                string? userIdString = HttpContext.GetUserId();
+                if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+                    return Unauthorized("Invalid user authentication");
+
+                KnowledgeFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, userId, cancellationToken);
                 if (fileInfo == null)
                     return NotFound("File not found");
 
                 return Ok(fileInfo);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized access attempt to file info {FileId} in knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                return Forbid("Access denied. You don't have permission to access this file.");
             }
             catch (Exception ex)
             {
@@ -257,13 +277,23 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                KnowledgeFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, cancellationToken);
+                // Get user ID from JWT token
+                string? userIdString = HttpContext.GetUserId();
+                if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+                    return Unauthorized("Invalid user authentication");
+
+                KnowledgeFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, userId, cancellationToken);
                 if (fileInfo == null)
                     return NotFound("File not found");
 
-                Stream fileStream = await _fileStorageService.GetFileStreamAsync(knowledgeBaseId, fileId, cancellationToken);
+                Stream fileStream = await _fileStorageService.GetFileStreamAsync(knowledgeBaseId, fileId, userId, cancellationToken);
                 
                 return File(fileStream, fileInfo.ContentType, fileInfo.OriginalFileName);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized download attempt for file {FileId} in knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                return Forbid("Access denied. You don't have permission to download this file.");
             }
             catch (FileNotFoundException)
             {
@@ -288,11 +318,21 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                bool deleted = await _fileStorageService.DeleteFileAsync(knowledgeBaseId, fileId, cancellationToken);
+                // Get user ID from JWT token
+                string? userIdString = HttpContext.GetUserId();
+                if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out Guid userId))
+                    return Unauthorized("Invalid user authentication");
+
+                bool deleted = await _fileStorageService.DeleteFileAsync(knowledgeBaseId, fileId, userId, cancellationToken);
                 if (!deleted)
                     return NotFound("File not found");
 
                 return Ok(new { message = "File deleted successfully" });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized delete attempt for file {FileId} in knowledge base {KnowledgeBaseId}", fileId, knowledgeBaseId);
+                return Forbid("Access denied. You don't have permission to delete this file.");
             }
             catch (Exception ex)
             {

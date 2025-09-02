@@ -28,6 +28,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             string contentType,
             long sizeInBytes,
             string relativePath,
+            byte[] hash,
             Guid uploadedByUserId)
         {
             // Input validation
@@ -43,14 +44,17 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             if (sizeInBytes < 0)
                 throw new ArgumentException("KnowledgeFile size cannot be negative.", nameof(sizeInBytes));
 
+            if (hash == null || hash.Length == 0)
+                throw new ArgumentException("File hash cannot be null or empty.", nameof(hash));
+
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 try
                 {
                     string insertKnowledgeFileSql = @"
-                        INSERT INTO knowledge_file (knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at)
-                        VALUES (@knowledgeBaseId, @originalKnowledgeFileName, @contentType, @sizeInBytes, @relativePath, @uploadedByUserId, @uploadedAt)
-                        RETURNING id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at";
+                        INSERT INTO knowledge_file (knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at)
+                        VALUES (@knowledgeBaseId, @originalKnowledgeFileName, @contentType, @sizeInBytes, @relativePath, @fileHash, @uploadedByUserId, @uploadedAt)
+                        RETURNING id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at";
 
                     DateTime uploadedAt = DateTime.UtcNow;
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -61,6 +65,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         command.Parameters.AddWithValue("@contentType", contentType);
                         command.Parameters.AddWithValue("@sizeInBytes", sizeInBytes);
                         command.Parameters.AddWithValue("@relativePath", relativePath);
+                        command.Parameters.AddWithValue("@fileHash", hash);
                         command.Parameters.AddWithValue("@uploadedByUserId", uploadedByUserId);
                         command.Parameters.AddWithValue("@uploadedAt", uploadedAt);
 
@@ -78,6 +83,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
                                 relativePath: reader.GetString(reader.GetOrdinal("relative_path")),
+                                hash: (byte[])reader["file_hash"],
                                 uploadedByUserId: reader.GetGuid(reader.GetOrdinal("uploaded_by_user_id")),
                                 uploadedAt: reader.GetDateTime(reader.GetOrdinal("uploaded_at")),
                                 createdAt: reader.GetDateTime(reader.GetOrdinal("created_at")),
@@ -121,7 +127,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string getKnowledgeFileSql = @"
-                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
                     FROM knowledge_file
                     WHERE id = @fileId AND knowledge_base_id = @knowledgeBaseId";
 
@@ -142,6 +148,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
                                 relativePath: reader.GetString(reader.GetOrdinal("relative_path")),
+                                hash: (byte[])reader["file_hash"],
                                 uploadedByUserId: reader.GetGuid(reader.GetOrdinal("uploaded_by_user_id")),
                                 uploadedAt: reader.GetDateTime(reader.GetOrdinal("uploaded_at")),
                                 createdAt: reader.GetDateTime(reader.GetOrdinal("created_at")),
@@ -195,6 +202,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
                                 relativePath: reader.GetString(reader.GetOrdinal("relative_path")),
+                                hash: (byte[])reader["file_hash"],
                                 uploadedByUserId: reader.GetGuid(reader.GetOrdinal("uploaded_by_user_id")),
                                 uploadedAt: reader.GetDateTime(reader.GetOrdinal("uploaded_at")),
                                 createdAt: reader.GetDateTime(reader.GetOrdinal("created_at")),
@@ -262,7 +270,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string getKnowledgeFilesSql = @"
-                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
                     FROM knowledge_file
                     WHERE knowledge_base_id = @knowledgeBaseId
                     ORDER BY uploaded_at DESC";
@@ -284,6 +292,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
                                 relativePath: reader.GetString(reader.GetOrdinal("relative_path")),
+                                hash: (byte[])reader["file_hash"],
                                 uploadedByUserId: reader.GetGuid(reader.GetOrdinal("uploaded_by_user_id")),
                                 uploadedAt: reader.GetDateTime(reader.GetOrdinal("uploaded_at")),
                                 createdAt: reader.GetDateTime(reader.GetOrdinal("created_at")),
@@ -328,6 +337,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
                                 relativePath: reader.GetString(reader.GetOrdinal("relative_path")),
+                                hash: (byte[])reader["file_hash"],
                                 uploadedByUserId: reader.GetGuid(reader.GetOrdinal("uploaded_by_user_id")),
                                 uploadedAt: reader.GetDateTime(reader.GetOrdinal("uploaded_at")),
                                 createdAt: reader.GetDateTime(reader.GetOrdinal("created_at")),
@@ -356,7 +366,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string getKnowledgeFilesSql = @"
-                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
                     FROM knowledge_file
                     WHERE knowledge_base_id = @knowledgeBaseId AND uploaded_by_user_id = @userId
                     ORDER BY uploaded_at DESC";
@@ -379,6 +389,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
                                 relativePath: reader.GetString(reader.GetOrdinal("relative_path")),
+                                hash: (byte[])reader["file_hash"],
                                 uploadedByUserId: reader.GetGuid(reader.GetOrdinal("uploaded_by_user_id")),
                                 uploadedAt: reader.GetDateTime(reader.GetOrdinal("uploaded_at")),
                                 createdAt: reader.GetDateTime(reader.GetOrdinal("created_at")),
@@ -518,7 +529,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         private async Task<KnowledgeFile?> GetKnowledgeFileByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getKnowledgeFileSql = $@"
-                SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
                 FROM knowledge_file
                 WHERE {parameterName} = @{parameterName}";
 
@@ -538,6 +549,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             contentType: reader.GetString(reader.GetOrdinal("content_type")),
                             sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
                             relativePath: reader.GetString(reader.GetOrdinal("relative_path")),
+                            hash: (byte[])reader["file_hash"],
                             uploadedByUserId: reader.GetGuid(reader.GetOrdinal("uploaded_by_user_id")),
                             uploadedAt: reader.GetDateTime(reader.GetOrdinal("uploaded_at")),
                             createdAt: reader.GetDateTime(reader.GetOrdinal("created_at")),
@@ -560,7 +572,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         private async Task<List<KnowledgeFile>> GetKnowledgeFilesByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getKnowledgeFilesSql = $@"
-                SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
                 FROM knowledge_file
                 WHERE {parameterName} = @{parameterName}
                 ORDER BY uploaded_at DESC";
@@ -582,6 +594,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                             contentType: reader.GetString(reader.GetOrdinal("content_type")),
                             sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
                             relativePath: reader.GetString(reader.GetOrdinal("relative_path")),
+                            hash: (byte[])reader["file_hash"],
                             uploadedByUserId: reader.GetGuid(reader.GetOrdinal("uploaded_by_user_id")),
                             uploadedAt: reader.GetDateTime(reader.GetOrdinal("uploaded_at")),
                             createdAt: reader.GetDateTime(reader.GetOrdinal("created_at")),
