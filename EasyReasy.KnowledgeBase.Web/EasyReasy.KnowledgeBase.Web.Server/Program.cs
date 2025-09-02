@@ -62,6 +62,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server
                 throw new InvalidOperationException($"MAX_FILE_SIZE_BYTES must be a positive integer, got: '{maxFileSizeString}'");
             }
 
+            // Log file storage configuration at startup
+            string fullFileStorageBasePath = Path.GetFullPath(fileStorageBasePath);
+            Console.WriteLine($"FileStorageService configured with base path: {fullFileStorageBasePath}");
+
             // Register services
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFileStorageService>(serviceProvider => 

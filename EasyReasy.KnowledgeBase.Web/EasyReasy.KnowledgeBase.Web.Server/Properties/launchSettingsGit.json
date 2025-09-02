@@ -19,6 +19,8 @@
         "OLLAMA_LARGE_TEXT_COMPLETION_MODEL_NAME": "llama3.1:8b",
         "OLLAMA_REASONING_TEXT_COMPLETION_MODEL_NAME": "qwen3:8b",
         "JWT_SIGNING_SECRET": "your-super-secure-jwt-signing-secret-at-least-32-characters-long",
+        "FILE_STORAGE_BASE_PATH": "uploads",
+        "MAX_FILE_SIZE_BYTES": "10485760",
         "LOG_LEVEL": "Information"
       }
     }
