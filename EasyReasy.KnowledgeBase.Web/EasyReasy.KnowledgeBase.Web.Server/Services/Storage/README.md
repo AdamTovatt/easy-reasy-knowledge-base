@@ -63,9 +63,88 @@ This document outlines areas where the current file storage implementation could
 
 ## Testing Requirements 🧪
 
-The following test classes and methods should be implemented to ensure proper functionality of the file storage and hashing systems:
+The following test classes and methods should be implemented to ensure proper functionality of the complete file storage and authorization system:
 
-### Sha256FileHashServiceTests
+### Authorization System Tests
+
+#### KnowledgeBaseAuthorizationServiceTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Services/Auth/KnowledgeBaseAuthorizationServiceTests.cs`
+- `ValidateAccessAsync_WithOwner_AllowsAllPermissions`
+- `ValidateAccessAsync_WithPublicKnowledgeBase_AllowsRead`
+- `ValidateAccessAsync_WithPublicKnowledgeBase_DeniesWrite`
+- `ValidateAccessAsync_WithExplicitReadPermission_AllowsRead`
+- `ValidateAccessAsync_WithExplicitWritePermission_AllowsReadAndWrite`
+- `ValidateAccessAsync_WithExplicitAdminPermission_AllowsAll`
+- `ValidateAccessAsync_WithNoPermission_DeniesAccess`
+- `ValidateAccessAsync_WithNonExistentKnowledgeBase_ThrowsException`
+- `HasAccessAsync_WithOwner_ReturnsTrue`
+- `HasAccessAsync_WithPublicRead_ReturnsCorrectAccess`
+- `HasAccessAsync_WithExplicitPermissions_ReturnsCorrectAccess`
+- `HasAccessAsync_WithNoPermission_ReturnsFalse`
+
+#### KnowledgeBasePermissionRepositoryTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/KnowledgeBasePermissionRepositoryTests.cs`
+- `HasPermissionAsync_WithOwner_ReturnsTrue`
+- `HasPermissionAsync_WithExplicitPermission_ReturnsTrue`
+- `HasPermissionAsync_WithInsufficientPermission_ReturnsFalse`
+- `HasPermissionAsync_WithNoPermission_ReturnsFalse`
+- `GetAccessibleKnowledgeBaseIdsAsync_ReturnsOwnedBases`
+- `GetAccessibleKnowledgeBaseIdsAsync_ReturnsPublicBases`
+- `GetAccessibleKnowledgeBaseIdsAsync_ReturnsExplicitPermissions`
+- `GrantPermissionAsync_WithValidData_CreatesPermission`
+- `GrantPermissionAsync_WithDuplicatePermission_UpdatesPermission`
+- `GrantPermissionAsync_WithInvalidKnowledgeBase_ThrowsException`
+- `RevokePermissionAsync_WithExistingPermission_RemovesPermission`
+- `RevokePermissionAsync_WithNonExistentPermission_DoesNotThrow`
+
+#### KnowledgeBaseRepositoryTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/KnowledgeBaseRepositoryTests.cs`
+- `GetByIdAsync_WithExistingId_ReturnsKnowledgeBase`
+- `GetByIdAsync_WithNonExistentId_ReturnsNull`
+- `CreateAsync_WithValidData_CreatesKnowledgeBase`
+- `CreateAsync_WithInvalidData_ThrowsException`
+- `UpdateAsync_WithValidData_UpdatesKnowledgeBase`
+- `UpdateAsync_WithNonExistentId_ThrowsException`
+- `DeleteAsync_WithExistingId_DeletesKnowledgeBase`
+- `DeleteAsync_WithNonExistentId_DoesNotThrow`
+- `GetByOwnerIdAsync_ReturnsOwnedKnowledgeBases`
+- `GetPublicKnowledgeBasesAsync_ReturnsOnlyPublicBases`
+
+### File Storage System Tests
+
+#### FileStorageServiceTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Services/Storage/FileStorageServiceTests.cs`
+
+**Chunked Upload Tests:**
+- `InitiateChunkedUploadAsync_WithValidData_CreatesSession`
+- `InitiateChunkedUploadAsync_WithoutWritePermission_ThrowsUnauthorizedException`
+- `InitiateChunkedUploadAsync_WithFileTooLarge_ThrowsException`
+- `UploadChunkAsync_WithValidChunk_UploadsSuccessfully`
+- `UploadChunkAsync_WithInvalidSession_ThrowsException`
+- `UploadChunkAsync_WithChunkTooLarge_ThrowsException`
+- `CompleteChunkedUploadAsync_WithValidSession_CompletesUpload`
+- `CompleteChunkedUploadAsync_WithIncompleteChunks_ThrowsException`
+- `CompleteChunkedUploadAsync_ComputesAndStoresFileHash`
+- `CompleteChunkedUploadAsync_WithHashServiceFailure_PropagatesException`
+- `CancelChunkedUploadAsync_WithValidSession_CancelsUpload`
+
+**File Operations Tests:**
+- `GetFileInfoAsync_WithValidFile_ReturnsFileInfo`
+- `GetFileInfoAsync_WithoutReadPermission_ThrowsUnauthorizedException`
+- `GetFileInfoAsync_WithNonExistentFile_ReturnsNull`
+- `GetFileStreamAsync_WithValidFile_ReturnsStream`
+- `GetFileStreamAsync_WithoutReadPermission_ThrowsUnauthorizedException`
+- `GetFileContentAsync_WithValidFile_ReturnsContent`
+- `DeleteFileAsync_WithValidFile_DeletesFile`
+- `DeleteFileAsync_WithoutWritePermission_ThrowsUnauthorizedException`
+- `ListFilesAsync_WithValidKnowledgeBase_ReturnsFiles`
+- `ListFilesAsync_WithoutReadPermission_ThrowsUnauthorizedException`
+- `FileExistsAsync_WithExistingFile_ReturnsTrue`
+- `FileExistsAsync_WithNonExistentFile_ReturnsFalse`
+- `DeleteKnowledgeBaseAsync_WithValidBase_DeletesAllFiles`
+- `DeleteKnowledgeBaseAsync_WithoutAdminPermission_ThrowsUnauthorizedException`
+
+#### Sha256FileHashServiceTests
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Services/Hashing/Sha256FileHashServiceTests.cs`
 - `ComputeHashAsync_WithValidStream_ReturnsCorrectHash`
 - `ComputeHashAsync_WithNullStream_ThrowsArgumentNullException`
@@ -83,36 +162,86 @@ The following test classes and methods should be implemented to ensure proper fu
 - `AlgorithmName_ReturnsCorrectValue`
 - `HashLength_ReturnsCorrectValue`
 
-### FileStorageServiceTests (Hash Integration)
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Services/Storage/FileStorageServiceTests.cs`
-- `CompleteChunkedUploadAsync_ComputesAndStoresFileHash`
-- `CompleteChunkedUploadAsync_WithHashServiceFailure_PropagatesException`
-- `CompleteChunkedUploadAsync_WithIdenticalFiles_GeneratesSameHash`
+### Repository Tests
 
-### KnowledgeFileRepositoryTests (Hash Support)
+#### KnowledgeFileRepositoryTests
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/KnowledgeFileRepositoryTests.cs`
-- `CreateAsync_WithValidHash_StoresHashCorrectly`
+- `CreateAsync_WithValidData_CreatesFile`
 - `CreateAsync_WithNullHash_ThrowsArgumentException`
 - `CreateAsync_WithEmptyHash_ThrowsArgumentException`
-- `GetByIdInKnowledgeBaseAsync_ReturnsFileWithHash`
-- `GetByKnowledgeBaseIdAsync_ReturnsFilesWithHashes`
-- `GetByKnowledgeBaseIdAndUserIdAsync_ReturnsFilesWithHashes`
-- `GetKnowledgeFileByParameterAsync_ReturnsFileWithHash`
+- `CreateAsync_WithInvalidKnowledgeBaseId_ThrowsException`
+- `CreateAsync_WithDuplicateRelativePath_ThrowsException`
+- `GetByIdInKnowledgeBaseAsync_WithExistingFile_ReturnsFile`
+- `GetByIdInKnowledgeBaseAsync_WithNonExistentFile_ReturnsNull`
+- `GetByIdInKnowledgeBaseAsync_WithWrongKnowledgeBase_ReturnsNull`
+- `GetByKnowledgeBaseIdAsync_WithFiles_ReturnsAllFiles`
+- `GetByKnowledgeBaseIdAsync_WithNoFiles_ReturnsEmptyList`
+- `GetByKnowledgeBaseIdAndUserIdAsync_WithUserFiles_ReturnsUserFiles`
+- `GetKnowledgeFileByParameterAsync_WithValidParameter_ReturnsFile`
+- `DeleteAsync_WithExistingFile_DeletesFile`
+- `DeleteAsync_WithNonExistentFile_DoesNotThrow`
 
-### KnowledgeFileDtoTests
+### Model and DTO Tests
+
+#### KnowledgeBaseTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/KnowledgeBaseTests.cs`
+- `Constructor_WithValidData_CreatesInstance`
+- `Constructor_WithNullValues_ThrowsArgumentException`
+- `Constructor_WithEmptyStrings_ThrowsArgumentException`
+
+#### KnowledgeBasePermissionTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/KnowledgeBasePermissionTests.cs`
+- `Constructor_WithValidData_CreatesInstance`
+- `Constructor_WithInvalidPermissionType_ThrowsException`
+
+#### KnowledgeFileTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/KnowledgeFileTests.cs`
+- `Constructor_WithValidData_CreatesInstance`
+- `Constructor_WithNullHash_ThrowsArgumentException`
+- `Constructor_WithEmptyHash_ThrowsArgumentException`
+- `Constructor_WithNegativeSize_ThrowsArgumentException`
+
+#### KnowledgeFileDtoTests
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/Dto/KnowledgeFileDtoTests.cs`
 - `FromFile_WithValidFile_ConvertsHashToHexCorrectly`
 - `FromFile_WithFileContainingNullHash_ThrowsException`
 - `Constructor_WithValidHashHex_CreatesCorrectly`
 - `HashHex_ReturnsUppercaseHexString`
-- `HashHex_WithEmptyHash_ReturnsEmptyString`
 
-### KnowledgeBaseAuthorizationServiceTests (Updated for Hash)
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Services/Auth/KnowledgeBaseAuthorizationServiceTests.cs`
-- Existing authorization tests should continue to work with hash-enabled file operations
+### Controller Tests
+
+#### FileStorageControllerTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Controllers/FileStorageControllerTests.cs`
+- `InitiateChunkedUpload_WithValidRequest_ReturnsSession`
+- `InitiateChunkedUpload_WithoutAuthentication_ReturnsUnauthorized`
+- `UploadChunk_WithValidChunk_ReturnsSuccess`
+- `UploadChunk_WithInvalidSession_ReturnsBadRequest`
+- `CompleteChunkedUpload_WithValidSession_ReturnsFileDto`
+- `CompleteChunkedUpload_WithIncompleteUpload_ReturnsBadRequest`
+- `GetFileInfo_WithValidFile_ReturnsFileDto`
+- `GetFileInfo_WithoutPermission_ReturnsForbidden`
+- `DownloadFile_WithValidFile_ReturnsFileStream`
+- `DownloadFile_WithoutPermission_ReturnsForbidden`
+- `DeleteFile_WithValidFile_ReturnsSuccess`
+- `DeleteFile_WithoutPermission_ReturnsForbidden`
+- `ListFiles_WithValidKnowledgeBase_ReturnsFileList`
+- `ListFiles_WithoutPermission_ReturnsForbidden`
 
 ### Integration Tests
-**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Integration/FileHashIntegrationTests.cs`
-- `EndToEndUpload_GeneratesAndStoresCorrectHash`
-- `MultipleIdenticalUploads_GenerateIdenticalHashes`
+
+#### FileStorageIntegrationTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Integration/FileStorageIntegrationTests.cs`
+- `EndToEndUpload_WithAuthorizedUser_CompletesSuccessfully`
+- `EndToEndUpload_WithUnauthorizedUser_Fails`
+- `MultipleChunkedUploads_CompleteIndependently`
 - `FileHashConsistency_AcrossServiceRestarts`
+- `PermissionChanges_ReflectedInFileAccess`
+- `KnowledgeBasePermissions_EnforceFileAccess`
+
+#### AuthorizationIntegrationTests
+**Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Integration/AuthorizationIntegrationTests.cs`
+- `OwnerAccess_AllowsAllOperations`
+- `PublicKnowledgeBase_AllowsReadOnlyAccess`
+- `ExplicitPermissions_EnforceCorrectAccess`
+- `PermissionInheritance_WorksCorrectly`
+- `MultiUserScenarios_IsolateAccess`
