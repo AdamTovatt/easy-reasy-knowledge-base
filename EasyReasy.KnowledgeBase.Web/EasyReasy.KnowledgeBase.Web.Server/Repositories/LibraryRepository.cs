@@ -25,14 +25,14 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         public async Task<Library> CreateAsync(string name, string? description, Guid ownerId, bool isPublic = false)
         {
             if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Knowledge base name cannot be null, empty, or whitespace.", nameof(name));
+                throw new ArgumentException("Library name cannot be null, empty, or whitespace.", nameof(name));
 
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 try
                 {
                     string insertKnowledgeBaseSql = @"
-                        INSERT INTO knowledge_base (name, description, owner_id, is_public)
+                        INSERT INTO library (name, description, owner_id, is_public)
                         VALUES (@name, @description, @ownerId, @isPublic)
                         RETURNING id, name, description, owner_id, is_public, created_at, updated_at";
 
@@ -85,7 +85,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                return await GetKnowledgeBaseByParameterAsync("id", id, connection);
+                return await GetLibraryByParameterAsync("id", id, connection);
             }
         }
 
@@ -97,7 +97,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                return await GetKnowledgeBaseByParameterAsync("name", name, connection);
+                return await GetLibraryByParameterAsync("name", name, connection);
             }
         }
 
@@ -109,7 +109,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 try
                 {
                     string updateKnowledgeBaseSql = @"
-                        UPDATE knowledge_base 
+                        UPDATE library 
                         SET name = @name, description = @description, owner_id = @ownerId, is_public = @isPublic
                         WHERE id = @id
                         RETURNING id, name, description, owner_id, is_public, created_at, updated_at";
@@ -127,7 +127,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         {
                             if (!await reader.ReadAsync())
                             {
-                                throw new InvalidOperationException($"Knowledge base with ID {knowledgeBase.Id} not found");
+                                throw new InvalidOperationException($"Library with ID {knowledgeBase.Id} not found");
                             }
 
                             return new Library(
@@ -167,7 +167,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 try
                 {
                     string deleteKnowledgeBaseSql = @"
-                        DELETE FROM knowledge_base 
+                        DELETE FROM library 
                         WHERE id = @id";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -216,7 +216,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             {
                 string existsSql = @"
                     SELECT COUNT(1)
-                    FROM knowledge_base
+                    FROM library
                     WHERE id = @id";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -237,7 +237,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             {
                 string isOwnerSql = @"
                     SELECT COUNT(1)
-                    FROM knowledge_base
+                    FROM library
                     WHERE id = @libraryId AND owner_id = @userId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -252,11 +252,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             }
         }
 
-        private async Task<Library?> GetKnowledgeBaseByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
+        private async Task<Library?> GetLibraryByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getKnowledgeBaseSql = $@"
                 SELECT id, name, description, owner_id, is_public, created_at, updated_at
-                FROM knowledge_base
+                FROM library
                 WHERE {parameterName} = @{parameterName}";
 
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -287,7 +287,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         {
             string getLibrariesSql = $@"
                 SELECT id, name, description, owner_id, is_public, created_at, updated_at
-                FROM knowledge_base
+                FROM library
                 WHERE {parameterName} = @{parameterName}
                 ORDER BY created_at DESC";
 

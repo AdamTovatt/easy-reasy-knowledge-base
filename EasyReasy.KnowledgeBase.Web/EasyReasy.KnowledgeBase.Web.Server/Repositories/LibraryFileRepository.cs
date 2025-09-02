@@ -52,9 +52,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 try
                 {
                     string insertKnowledgeFileSql = @"
-                        INSERT INTO knowledge_file (knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at)
+                        INSERT INTO library_file (library_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at)
                         VALUES (@libraryId, @originalKnowledgeFileName, @contentType, @sizeInBytes, @relativePath, @fileHash, @uploadedByUserId, @uploadedAt)
-                        RETURNING id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at";
+                        RETURNING id, library_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at";
 
                     DateTime uploadedAt = DateTime.UtcNow;
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -78,7 +78,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                             return new LibraryFile(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
-                                libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                                libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                                 originalFileName: reader.GetString(reader.GetOrdinal("original_file_name")),
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
@@ -127,9 +127,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string getKnowledgeFileSql = @"
-                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
-                    FROM knowledge_file
-                    WHERE id = @fileId AND knowledge_base_id = @libraryId";
+                    SELECT id, library_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                    FROM library_file
+                    WHERE id = @fileId AND library_id = @libraryId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 using (NpgsqlCommand command = new(getKnowledgeFileSql, npgsqlConnection))
@@ -143,7 +143,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         {
                             return new LibraryFile(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
-                                libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                                libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                                 originalFileName: reader.GetString(reader.GetOrdinal("original_file_name")),
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
@@ -169,12 +169,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 try
                 {
                     string updateKnowledgeFileSql = @"
-                        UPDATE knowledge_file 
-                        SET knowledge_base_id = @libraryId, original_file_name = @originalKnowledgeFileName, 
+                        UPDATE library_file 
+                        SET library_id = @libraryId, original_file_name = @originalKnowledgeFileName, 
                             content_type = @contentType, size_in_bytes = @sizeInBytes, relative_path = @relativePath, 
                             uploaded_by_user_id = @uploadedByUserId, uploaded_at = @uploadedAt
                         WHERE id = @id
-                        RETURNING id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at";
+                        RETURNING id, library_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                     using (NpgsqlCommand command = new(updateKnowledgeFileSql, npgsqlConnection))
@@ -192,12 +192,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         {
                             if (!await reader.ReadAsync())
                             {
-                                throw new InvalidOperationException($"KnowledgeFile with ID {file.Id} not found");
+                                throw new InvalidOperationException($"LibraryFile with ID {file.Id} not found");
                             }
 
                             return new LibraryFile(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
-                                libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                                libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                                 originalFileName: reader.GetString(reader.GetOrdinal("original_file_name")),
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
@@ -239,7 +239,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 try
                 {
                     string deleteKnowledgeFileSql = @"
-                        DELETE FROM knowledge_file 
+                        DELETE FROM library_file 
                         WHERE id = @id";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -270,9 +270,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string getKnowledgeFilesSql = @"
-                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
-                    FROM knowledge_file
-                    WHERE knowledge_base_id = @libraryId
+                    SELECT id, library_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                    FROM library_file
+                    WHERE library_id = @libraryId
                     ORDER BY uploaded_at DESC";
 
                 List<LibraryFile> files = new();
@@ -287,7 +287,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         {
                             files.Add(new LibraryFile(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
-                                libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                                libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                                 originalFileName: reader.GetString(reader.GetOrdinal("original_file_name")),
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
@@ -312,9 +312,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string getKnowledgeFilesSql = @"
-                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, uploaded_by_user_id, uploaded_at, created_at, updated_at
-                    FROM knowledge_file
-                    WHERE knowledge_base_id = @libraryId
+                    SELECT id, library_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                    FROM library_file
+                    WHERE library_id = @libraryId
                     ORDER BY uploaded_at DESC
                     OFFSET @offset LIMIT @limit";
 
@@ -332,7 +332,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         {
                             files.Add(new LibraryFile(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
-                                libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                                libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                                 originalFileName: reader.GetString(reader.GetOrdinal("original_file_name")),
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
@@ -366,9 +366,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string getKnowledgeFilesSql = @"
-                    SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
-                    FROM knowledge_file
-                    WHERE knowledge_base_id = @libraryId AND uploaded_by_user_id = @userId
+                    SELECT id, library_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                    FROM library_file
+                    WHERE library_id = @libraryId AND uploaded_by_user_id = @userId
                     ORDER BY uploaded_at DESC";
 
                 List<LibraryFile> files = new();
@@ -384,7 +384,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                         {
                             files.Add(new LibraryFile(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
-                                libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                                libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                                 originalFileName: reader.GetString(reader.GetOrdinal("original_file_name")),
                                 contentType: reader.GetString(reader.GetOrdinal("content_type")),
                                 sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
@@ -410,7 +410,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             {
                 string existsSql = @"
                     SELECT COUNT(1)
-                    FROM knowledge_file
+                    FROM library_file
                     WHERE id = @id";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -431,8 +431,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             {
                 string existsSql = @"
                     SELECT COUNT(1)
-                    FROM knowledge_file
-                    WHERE id = @fileId AND knowledge_base_id = @libraryId";
+                    FROM library_file
+                    WHERE id = @fileId AND library_id = @libraryId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 using (NpgsqlCommand command = new(existsSql, npgsqlConnection))
@@ -453,8 +453,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             {
                 string countSql = @"
                     SELECT COUNT(*)
-                    FROM knowledge_file
-                    WHERE knowledge_base_id = @libraryId";
+                    FROM library_file
+                    WHERE library_id = @libraryId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 using (NpgsqlCommand command = new(countSql, npgsqlConnection))
@@ -473,8 +473,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             {
                 string sizeSql = @"
                     SELECT COALESCE(SUM(size_in_bytes), 0)
-                    FROM knowledge_file
-                    WHERE knowledge_base_id = @libraryId";
+                    FROM library_file
+                    WHERE library_id = @libraryId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 using (NpgsqlCommand command = new(sizeSql, npgsqlConnection))
@@ -494,8 +494,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 try
                 {
                     string deleteKnowledgeFilesSql = @"
-                        DELETE FROM knowledge_file 
-                        WHERE knowledge_base_id = @libraryId";
+                        DELETE FROM library_file 
+                        WHERE library_id = @libraryId";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                     using (NpgsqlCommand command = new(deleteKnowledgeFilesSql, npgsqlConnection))
@@ -529,8 +529,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         private async Task<LibraryFile?> GetKnowledgeFileByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getKnowledgeFileSql = $@"
-                SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
-                FROM knowledge_file
+                SELECT id, library_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                FROM library_file
                 WHERE {parameterName} = @{parameterName}";
 
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -544,7 +544,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     {
                         return new LibraryFile(
                             id: reader.GetGuid(reader.GetOrdinal("id")),
-                            libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                            libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                             originalFileName: reader.GetString(reader.GetOrdinal("original_file_name")),
                             contentType: reader.GetString(reader.GetOrdinal("content_type")),
                             sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),
@@ -572,8 +572,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         private async Task<List<LibraryFile>> GetKnowledgeFilesByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getKnowledgeFilesSql = $@"
-                SELECT id, knowledge_base_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
-                FROM knowledge_file
+                SELECT id, library_id, original_file_name, content_type, size_in_bytes, relative_path, file_hash, uploaded_by_user_id, uploaded_at, created_at, updated_at
+                FROM library_file
                 WHERE {parameterName} = @{parameterName}
                 ORDER BY uploaded_at DESC";
 
@@ -589,7 +589,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     {
                         files.Add(new LibraryFile(
                             id: reader.GetGuid(reader.GetOrdinal("id")),
-                            libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                            libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                             originalFileName: reader.GetString(reader.GetOrdinal("original_file_name")),
                             contentType: reader.GetString(reader.GetOrdinal("content_type")),
                             sizeInBytes: reader.GetInt64(reader.GetOrdinal("size_in_bytes")),

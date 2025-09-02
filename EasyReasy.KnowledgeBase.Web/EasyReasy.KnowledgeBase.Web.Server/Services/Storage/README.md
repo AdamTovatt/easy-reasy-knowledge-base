@@ -98,18 +98,41 @@ The following test classes and methods should be implemented to ensure proper fu
 - `RevokePermissionAsync_WithExistingPermission_RemovesPermission`
 - `RevokePermissionAsync_WithNonExistentPermission_DoesNotThrow`
 
-#### LibraryRepositoryTests
+#### ✅ LibraryRepositoryTests (COMPLETED)
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/LibraryRepositoryTests.cs`
-- `GetByIdAsync_WithExistingId_ReturnsLibrary`
-- `GetByIdAsync_WithNonExistentId_ReturnsNull`
-- `CreateAsync_WithValidData_CreatesLibrary`
-- `CreateAsync_WithInvalidData_ThrowsException`
-- `UpdateAsync_WithValidData_UpdatesLibrary`
-- `UpdateAsync_WithNonExistentId_ThrowsException`
-- `DeleteAsync_WithExistingId_DeletesLibrary`
-- `DeleteAsync_WithNonExistentId_DoesNotThrow`
-- `GetByOwnerIdAsync_ReturnsOwnedLibraries`
-- `GetPublicLibrariesAsync_ReturnsOnlyPublicLibraries`
+- ✅ `CreateAsync_WithValidData_CreatesLibrarySuccessfully`
+- ✅ `CreateAsync_WithNullDescription_CreatesLibrarySuccessfully`
+- ✅ `CreateAsync_WithPublicLibrary_CreatesLibrarySuccessfully`
+- ✅ `CreateAsync_WithNullName_ThrowsArgumentException`
+- ✅ `CreateAsync_WithEmptyName_ThrowsArgumentException`
+- ✅ `CreateAsync_WithWhitespaceOnlyName_ThrowsArgumentException`
+- ✅ `CreateAsync_WithNonExistentOwner_ThrowsInvalidOperationException`
+- ✅ `CreateAsync_WithDuplicateName_ThrowsInvalidOperationException`
+- ✅ `GetByIdAsync_WithExistingLibrary_ReturnsLibrary`
+- ✅ `GetByIdAsync_WithNonExistentLibrary_ReturnsNull`
+- ✅ `GetByNameAsync_WithExistingLibrary_ReturnsLibrary`
+- ✅ `GetByNameAsync_WithNonExistentName_ReturnsNull`
+- ✅ `GetByNameAsync_WithNullName_ReturnsNull`
+- ✅ `GetByNameAsync_WithEmptyName_ReturnsNull`
+- ✅ `UpdateAsync_WithExistingLibrary_UpdatesLibrarySuccessfully`
+- ✅ `UpdateAsync_WithNonExistentLibrary_ThrowsInvalidOperationException`
+- ✅ `UpdateAsync_WithDuplicateName_ThrowsInvalidOperationException`
+- ✅ `DeleteAsync_WithExistingLibrary_DeletesLibrarySuccessfully`
+- ✅ `DeleteAsync_WithNonExistentLibrary_ReturnsFalse`
+- ✅ `GetByOwnerIdAsync_WithLibraries_ReturnsAllOwnerLibraries`
+- ✅ `GetByOwnerIdAsync_WithNoLibraries_ReturnsEmptyList`
+- ✅ `GetPublicLibrariesAsync_WithPublicLibraries_ReturnsOnlyPublicLibraries`
+- ✅ `GetPublicLibrariesAsync_WithNoPublicLibraries_ReturnsEmptyList`
+- ✅ `ExistsAsync_WithExistingLibrary_ReturnsTrue`
+- ✅ `ExistsAsync_WithNonExistentLibrary_ReturnsFalse`
+- ✅ `IsOwnerAsync_WithCorrectOwner_ReturnsTrue`
+- ✅ `IsOwnerAsync_WithWrongOwner_ReturnsFalse`
+- ✅ `IsOwnerAsync_WithNonExistentLibrary_ReturnsFalse`
+- ✅ `IsOwnerAsync_WithNonExistentUser_ReturnsFalse`
+- ✅ `CreateAsync_WithUnicodeName_HandlesCorrectly`
+- ✅ `CreateAsync_WithVeryLongName_HandlesCorrectly`
+- ✅ `UpdateAsync_WithNullDescription_UpdatesCorrectly`
+- ✅ `MultipleOperations_WorkCorrectly`
 
 ### File Storage System Tests
 
@@ -165,49 +188,140 @@ The following test classes and methods should be implemented to ensure proper fu
 
 ### Repository Tests
 
-#### LibraryFileRepositoryTests
+#### ✅ LibraryFileRepositoryTests (COMPLETED)
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Repositories/LibraryFileRepositoryTests.cs`
-- `CreateAsync_WithValidData_CreatesFile`
-- `CreateAsync_WithNullHash_ThrowsArgumentException`
-- `CreateAsync_WithEmptyHash_ThrowsArgumentException`
-- `CreateAsync_WithInvalidLibraryId_ThrowsException`
-- `CreateAsync_WithDuplicateRelativePath_ThrowsException`
-- `GetByIdInLibraryAsync_WithExistingFile_ReturnsFile`
-- `GetByIdInLibraryAsync_WithNonExistentFile_ReturnsNull`
-- `GetByIdInLibraryAsync_WithWrongLibrary_ReturnsNull`
-- `GetByLibraryIdAsync_WithFiles_ReturnsAllFiles`
-- `GetByLibraryIdAsync_WithNoFiles_ReturnsEmptyList`
-- `GetByLibraryIdAndUserIdAsync_WithUserFiles_ReturnsUserFiles`
-- `GetLibraryFileByParameterAsync_WithValidParameter_ReturnsFile`
-- `DeleteAsync_WithExistingFile_DeletesFile`
-- `DeleteAsync_WithNonExistentFile_DoesNotThrow`
+- ✅ `CreateAsync_WithValidData_CreatesFileSuccessfully`
+- ✅ `CreateAsync_WithNullOriginalFileName_ThrowsArgumentException`
+- ✅ `CreateAsync_WithEmptyOriginalFileName_ThrowsArgumentException`
+- ✅ `CreateAsync_WithNullContentType_ThrowsArgumentException`
+- ✅ `CreateAsync_WithNullRelativePath_ThrowsArgumentException`
+- ✅ `CreateAsync_WithNegativeSize_ThrowsArgumentException`
+- ✅ `CreateAsync_WithNullHash_ThrowsArgumentException`
+- ✅ `CreateAsync_WithEmptyHash_ThrowsArgumentException`
+- ✅ `CreateAsync_WithDuplicateRelativePath_ThrowsInvalidOperationException`
+- ✅ `CreateAsync_WithNonExistentLibrary_ThrowsInvalidOperationException`
+- ✅ `GetByIdAsync_WithExistingFile_ReturnsFile`
+- ✅ `GetByIdAsync_WithNonExistentFile_ReturnsNull`
+- ✅ `GetByIdInKnowledgeBaseAsync_WithExistingFile_ReturnsFile`
+- ✅ `GetByIdInKnowledgeBaseAsync_WithWrongLibrary_ReturnsNull`
+- ✅ `GetByIdInKnowledgeBaseAsync_WithNonExistentFile_ReturnsNull`
+- ✅ `GetByKnowledgeBaseIdAsync_WithFiles_ReturnsAllFiles`
+- ✅ `GetByKnowledgeBaseIdAsync_WithNoFiles_ReturnsEmptyList`
+- ✅ `GetByKnowledgeBaseIdAsync_WithPagination_ReturnsCorrectPage`
+- ✅ `DeleteAsync_WithExistingFile_DeletesFileSuccessfully`
+- ✅ `DeleteAsync_WithNonExistentFile_ReturnsFalse`
+- ✅ `ExistsAsync_WithExistingFile_ReturnsTrue`
+- ✅ `ExistsAsync_WithNonExistentFile_ReturnsFalse`
+- ✅ `ExistsInKnowledgeBaseAsync_WithExistingFile_ReturnsTrue`
+- ✅ `ExistsInKnowledgeBaseAsync_WithWrongLibrary_ReturnsFalse`
+- ✅ `GetCountByKnowledgeBaseIdAsync_WithFiles_ReturnsCorrectCount`
+- ✅ `GetCountByKnowledgeBaseIdAsync_WithNoFiles_ReturnsZero`
+- ✅ `GetTotalSizeByKnowledgeBaseIdAsync_WithFiles_ReturnsCorrectSize`
+- ✅ `GetTotalSizeByKnowledgeBaseIdAsync_WithNoFiles_ReturnsZero`
+- ✅ `DeleteByKnowledgeBaseIdAsync_WithFiles_DeletesAllFiles`
+- ✅ `DeleteByKnowledgeBaseIdAsync_WithNoFiles_ReturnsZero`
 
 ### Model and DTO Tests
 
-#### LibraryTests
+#### ✅ LibraryTests (COMPLETED)
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/LibraryTests.cs`
-- `Constructor_WithValidData_CreatesInstance`
-- `Constructor_WithNullValues_ThrowsArgumentException`
-- `Constructor_WithEmptyStrings_ThrowsArgumentException`
+- ✅ `Constructor_WithValidData_CreatesInstance`
+- ✅ `Constructor_WithNullDescription_CreatesInstance`
+- ✅ `Constructor_WithEmptyDescription_CreatesInstance`
+- ✅ `Constructor_WithPublicLibrary_CreatesInstance`
+- ✅ `Constructor_WithPrivateLibrary_CreatesInstance`
+- ✅ `Constructor_WithNullName_ThrowsArgumentNullException`
+- ✅ `Constructor_WithNullNameDirectCall_ThrowsArgumentNullException`
+- ✅ `Constructor_WithEmptyGuids_CreatesInstance`
+- ✅ `Constructor_WithMinDateTime_CreatesInstance`
+- ✅ `Constructor_WithMaxDateTime_CreatesInstance`
+- ✅ `Constructor_WithUpdatedAtBeforeCreatedAt_CreatesInstance`
+- ✅ `Constructor_WithWhitespaceOnlyName_CreatesInstance`
+- ✅ `Constructor_WithEmptyStringName_CreatesInstance`
+- ✅ `Constructor_WithUnicodeName_CreatesInstance`
+- ✅ `Constructor_WithVeryLongName_CreatesInstance`
+- ✅ `Constructor_WithSpecialCharactersInName_CreatesInstance`
+- ✅ `Constructor_WithUnicodeDescription_CreatesInstance`
+- ✅ `Constructor_WithVeryLongDescription_CreatesInstance`
+- ✅ `Constructor_WithMultilineDescription_CreatesInstance`
+- ✅ `Properties_AreReadOnly`
+- ✅ `Constructor_WithSpecificDateTimes_StoresExactValues`
+- ✅ `Constructor_WithSameDateTimes_AllowsDuplicates`
+- ✅ `Constructor_WithTypicalUserScenario_CreatesCorrectly`
+- ✅ `Constructor_WithPublicLibraryScenario_CreatesCorrectly`
 
-#### LibraryPermissionTests
+#### ✅ LibraryPermissionTests (COMPLETED)
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/LibraryPermissionTests.cs`
-- `Constructor_WithValidData_CreatesInstance`
-- `Constructor_WithInvalidPermissionType_ThrowsException`
+- ✅ `Constructor_WithValidData_CreatesInstance`
+- ✅ `Constructor_WithReadPermission_CreatesInstance`
+- ✅ `Constructor_WithWritePermission_CreatesInstance`
+- ✅ `Constructor_WithAdminPermission_CreatesInstance`
+- ✅ `Constructor_WithAllPermissionTypes_CreatesInstances`
+- ✅ `Constructor_WithEmptyGuids_CreatesInstance`
+- ✅ `Constructor_WithMinDateTime_CreatesInstance`
+- ✅ `Constructor_WithMaxDateTime_CreatesInstance`
+- ✅ `Constructor_WithSameUserAndGrantedBy_CreatesInstance`
+- ✅ `PermissionType_ReadValue_EqualsZero`
+- ✅ `PermissionType_WriteValue_EqualsOne`
+- ✅ `PermissionType_AdminValue_EqualsTwo`
+- ✅ `PermissionType_AllEnumValues_AreValid`
+- ✅ `PermissionType_ToStringValues_AreCorrect`
+- ✅ `PermissionType_IsDefined_ForAllValues`
+- ✅ `PermissionType_InvalidValue_IsNotDefined`
+- ✅ `Properties_AreReadOnly`
+- ✅ `Constructor_WithSpecificDateTime_StoresExactValue`
+- ✅ `Constructor_WithLocalDateTime_PreservesKind`
+- ✅ `Constructor_OwnerGrantingReadPermission_CreatesCorrectly`
+- ✅ `Constructor_AdminGrantingWritePermission_CreatesCorrectly`
+- ✅ `Constructor_UpgradingPermission_CreatesCorrectly`
+- ✅ `Constructor_MultiplePermissionsForSameLibrary_CreatesDistinctInstances`
 
-#### LibraryFileTests
+#### ✅ LibraryFileTests (COMPLETED)
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/LibraryFileTests.cs`
-- `Constructor_WithValidData_CreatesInstance`
-- `Constructor_WithNullHash_ThrowsArgumentException`
-- `Constructor_WithEmptyHash_ThrowsArgumentException`
-- `Constructor_WithNegativeSize_ThrowsArgumentException`
+- ✅ `Constructor_WithValidData_CreatesInstance`
+- ✅ `Constructor_WithEmptyGuids_CreatesInstance`
+- ✅ `Constructor_WithNullStrings_CreatesInstance`
+- ✅ `Constructor_WithEmptyStrings_CreatesInstance`
+- ✅ `Constructor_WithNullHash_CreatesInstance`
+- ✅ `Constructor_WithEmptyHash_CreatesInstance`
+- ✅ `Constructor_WithNegativeSize_CreatesInstance`
+- ✅ `Constructor_WithZeroSize_CreatesInstance`
+- ✅ `Constructor_WithMaxSize_CreatesInstance`
+- ✅ `FormattedSize_WithZeroBytes_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithBytesOnly_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithKilobytes_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithMegabytes_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithGigabytes_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithTerabytes_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithExactKilobyte_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithExactMegabyte_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithVerySmallDecimal_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithLargeTerabytes_StaysInTerabytes`
+- ✅ `FormattedSize_WithNegativeSize_HandlesGracefully`
+- ✅ `Hash_WithValidSha256Hash_StoresCorrectly`
+- ✅ `Hash_WithDifferentLengthHash_StoresCorrectly`
+- ✅ `DateProperties_WithVariousDates_StoreCorrectly`
+- ✅ `DateProperties_WithMinDateTime_StoresCorrectly`
+- ✅ `DateProperties_WithMaxDateTime_StoresCorrectly`
+- ✅ `ContentType_WithCommonMimeTypes_StoresCorrectly`
+- ✅ `Constructor_WithUnicodeFileName_HandlesCorrectly`
+- ✅ `Constructor_WithVeryLongFileName_HandlesCorrectly`
+- ✅ `Constructor_WithSpecialCharactersInPath_HandlesCorrectly`
 
-#### LibraryFileDtoTests
+#### ✅ LibraryFileDtoTests (COMPLETED)
 **Location**: `EasyReasy.KnowledgeBase.Web.Server.Tests/Models/Dto/LibraryFileDtoTests.cs`
-- `FromFile_WithValidFile_ConvertsHashToHexCorrectly`
-- `FromFile_WithFileContainingNullHash_ThrowsException`
-- `Constructor_WithValidHashHex_CreatesCorrectly`
-- `HashHex_ReturnsUppercaseHexString`
+- ✅ `Constructor_WithValidData_CreatesInstance`
+- ✅ `Constructor_WithNullOriginalFileName_ThrowsArgumentNullException`
+- ✅ `Constructor_WithNullContentType_ThrowsArgumentNullException`
+- ✅ `Constructor_WithNullRelativePath_ThrowsArgumentNullException`
+- ✅ `Constructor_WithNullHashHex_ThrowsArgumentNullException`
+- ✅ `FromFile_WithValidLibraryFile_CreatesCorrectDto`
+- ✅ `FromFile_HashHex_IsUppercase`
+- ✅ `FromFile_WithEmptyHash_CreatesEmptyHashHex`
+- ✅ `FormattedSize_WithZeroBytes_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithKilobytes_ReturnsCorrectFormat`
+- ✅ `FormattedSize_WithMegabytes_ReturnsCorrectFormat`
+- ✅ `FromFile_ThenAccess_WorksCorrectly`
 
 ### Controller Tests
 

@@ -87,7 +87,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Auth
         {
             try
             {
-                return await _permissionRepository.GetAccessibleKnowledgeBaseIdsAsync(userId, minimumPermission);
+                return await _permissionRepository.GetAccessibleLibraryIdsAsync(userId, minimumPermission);
             }
             catch (Exception ex)
             {

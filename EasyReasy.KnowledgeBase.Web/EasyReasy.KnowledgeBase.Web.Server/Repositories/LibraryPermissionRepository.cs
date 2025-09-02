@@ -54,16 +54,16 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<List<Guid>> GetAccessibleKnowledgeBaseIdsAsync(Guid userId, LibraryPermissionType minimumPermission = LibraryPermissionType.Read)
+        public async Task<List<Guid>> GetAccessibleLibraryIdsAsync(Guid userId, LibraryPermissionType minimumPermission = LibraryPermissionType.Read)
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 List<Guid> accessibleIds = new();
 
-                // Get owned librarys (owners always have admin access)
+                // Get owned libraries (owners always have admin access)
                 string getOwnedSql = @"
                     SELECT id
-                    FROM knowledge_base
+                    FROM library
                     WHERE owner_id = @userId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -79,12 +79,12 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     }
                 }
 
-                // Get public librarys if only read permission is required
+                // Get public libraries if only read permission is required
                 if (minimumPermission == LibraryPermissionType.Read)
                 {
                     string getPublicSql = @"
                         SELECT id
-                        FROM knowledge_base
+                        FROM library
                         WHERE is_public = true AND owner_id != @userId";
 
                     using (NpgsqlCommand command = new(getPublicSql, npgsqlConnection))
@@ -100,10 +100,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     }
                 }
 
-                // Get librarys with explicit permissions
+                // Get libraries with explicit permissions
                 string getExplicitPermissionsSql = @"
-                    SELECT knowledge_base_id
-                    FROM knowledge_base_permission
+                    SELECT library_id
+                    FROM library_permission
                     WHERE user_id = @userId AND permission_type::text = ANY(@permissionTypes)";
 
                 List<string> allowedPermissions = GetSufficientPermissionTypes(minimumPermission);
@@ -115,7 +115,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     {
                         while (await reader.ReadAsync())
                         {
-                            Guid kbId = reader.GetGuid(reader.GetOrdinal("knowledge_base_id"));
+                            Guid kbId = reader.GetGuid(reader.GetOrdinal("library_id"));
                             if (!accessibleIds.Contains(kbId))
                             {
                                 accessibleIds.Add(kbId);
@@ -136,9 +136,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 try
                 {
                     string insertPermissionSql = @"
-                        INSERT INTO knowledge_base_permission (knowledge_base_id, user_id, permission_type, granted_by_user_id)
-                        VALUES (@libraryId, @userId, @permissionType, @grantedByUserId)
-                        RETURNING id, knowledge_base_id, user_id, permission_type, granted_by_user_id, created_at";
+                        INSERT INTO library_permission (library_id, user_id, permission_type, granted_by_user_id)
+                        VALUES (@libraryId, @userId, @permissionType::library_permission_type, @grantedByUserId)
+                        RETURNING id, library_id, user_id, permission_type, granted_by_user_id, created_at";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                     using (NpgsqlCommand command = new(insertPermissionSql, npgsqlConnection))
@@ -157,7 +157,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                             return new LibraryPermission(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
-                                libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                                libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                                 userId: reader.GetGuid(reader.GetOrdinal("user_id")),
                                 permissionType: ParsePermissionType(reader.GetString(reader.GetOrdinal("permission_type"))),
                                 grantedByUserId: reader.GetGuid(reader.GetOrdinal("granted_by_user_id")),
@@ -189,10 +189,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                 try
                 {
                     string updatePermissionSql = @"
-                        UPDATE knowledge_base_permission 
-                        SET permission_type = @newPermissionType, granted_by_user_id = @updatedByUserId
-                        WHERE knowledge_base_id = @libraryId AND user_id = @userId
-                        RETURNING id, knowledge_base_id, user_id, permission_type, granted_by_user_id, created_at";
+                        UPDATE library_permission 
+                        SET permission_type = @newPermissionType::library_permission_type, granted_by_user_id = @updatedByUserId
+                        WHERE library_id = @libraryId AND user_id = @userId
+                        RETURNING id, library_id, user_id, permission_type, granted_by_user_id, created_at";
 
                     NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                     using (NpgsqlCommand command = new(updatePermissionSql, npgsqlConnection))
@@ -211,7 +211,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
 
                             return new LibraryPermission(
                                 id: reader.GetGuid(reader.GetOrdinal("id")),
-                                libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                                libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                                 userId: reader.GetGuid(reader.GetOrdinal("user_id")),
                                 permissionType: ParsePermissionType(reader.GetString(reader.GetOrdinal("permission_type"))),
                                 grantedByUserId: reader.GetGuid(reader.GetOrdinal("granted_by_user_id")),
@@ -239,8 +239,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string deletePermissionSql = @"
-                    DELETE FROM knowledge_base_permission 
-                    WHERE knowledge_base_id = @libraryId AND user_id = @userId";
+                    DELETE FROM library_permission 
+                    WHERE library_id = @libraryId AND user_id = @userId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 using (NpgsqlCommand command = new(deletePermissionSql, npgsqlConnection))
@@ -254,11 +254,11 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<List<LibraryPermission>> GetPermissionsByKnowledgeBaseAsync(Guid libraryId)
+        public async Task<List<LibraryPermission>> GetPermissionsByLibraryAsync(Guid libraryId)
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
-                return await GetPermissionsByParameterAsync("knowledge_base_id", libraryId, connection);
+                return await GetPermissionsByParameterAsync("library_id", libraryId, connection);
             }
         }
 
@@ -272,13 +272,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         }
 
         /// <inheritdoc/>
-        public async Task<int> RevokeAllPermissionsForKnowledgeBaseAsync(Guid libraryId)
+        public async Task<int> RevokeAllPermissionsForLibraryAsync(Guid libraryId)
         {
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string deletePermissionsSql = @"
-                    DELETE FROM knowledge_base_permission 
-                    WHERE knowledge_base_id = @libraryId";
+                    DELETE FROM library_permission 
+                    WHERE library_id = @libraryId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
                 using (NpgsqlCommand command = new(deletePermissionsSql, npgsqlConnection))
@@ -295,7 +295,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
             using (IDbConnection connection = await _connectionFactory.CreateOpenConnectionAsync())
             {
                 string deletePermissionsSql = @"
-                    DELETE FROM knowledge_base_permission 
+                    DELETE FROM library_permission 
                     WHERE user_id = @userId";
 
                 NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -311,8 +311,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         {
             string getPermissionSql = @"
                 SELECT permission_type
-                FROM knowledge_base_permission
-                WHERE user_id = @userId AND knowledge_base_id = @libraryId";
+                FROM library_permission
+                WHERE user_id = @userId AND library_id = @libraryId";
 
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
             using (NpgsqlCommand command = new(getPermissionSql, npgsqlConnection))
@@ -331,7 +331,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         {
             string isOwnerSql = @"
                 SELECT COUNT(1)
-                FROM knowledge_base
+                FROM library
                 WHERE id = @libraryId AND owner_id = @userId";
 
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -349,7 +349,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         {
             string isPublicSql = @"
                 SELECT is_public
-                FROM knowledge_base
+                FROM library
                 WHERE id = @libraryId";
 
             NpgsqlConnection npgsqlConnection = (NpgsqlConnection)connection;
@@ -364,8 +364,8 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         private async Task<List<LibraryPermission>> GetPermissionsByParameterAsync<T>(string parameterName, T parameterValue, IDbConnection connection)
         {
             string getPermissionsSql = $@"
-                SELECT id, knowledge_base_id, user_id, permission_type, granted_by_user_id, created_at
-                FROM knowledge_base_permission
+                SELECT id, library_id, user_id, permission_type, granted_by_user_id, created_at
+                FROM library_permission
                 WHERE {parameterName} = @{parameterName}
                 ORDER BY created_at DESC";
 
@@ -381,7 +381,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
                     {
                         permissions.Add(new LibraryPermission(
                             id: reader.GetGuid(reader.GetOrdinal("id")),
-                            libraryId: reader.GetGuid(reader.GetOrdinal("knowledge_base_id")),
+                            libraryId: reader.GetGuid(reader.GetOrdinal("library_id")),
                             userId: reader.GetGuid(reader.GetOrdinal("user_id")),
                             permissionType: ParsePermissionType(reader.GetString(reader.GetOrdinal("permission_type"))),
                             grantedByUserId: reader.GetGuid(reader.GetOrdinal("granted_by_user_id")),

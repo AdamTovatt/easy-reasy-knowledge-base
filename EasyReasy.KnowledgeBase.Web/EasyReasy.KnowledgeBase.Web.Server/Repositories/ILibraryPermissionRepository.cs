@@ -30,7 +30,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="minimumPermission">The minimum permission level required.</param>
         /// <returns>A list of library IDs the user can access.</returns>
-        Task<List<Guid>> GetAccessibleKnowledgeBaseIdsAsync(Guid userId, LibraryPermissionType minimumPermission = LibraryPermissionType.Read);
+        Task<List<Guid>> GetAccessibleLibraryIdsAsync(Guid userId, LibraryPermissionType minimumPermission = LibraryPermissionType.Read);
 
         /// <summary>
         /// Grants a permission to a user for a library.
@@ -65,7 +65,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// </summary>
         /// <param name="libraryId">The unique identifier of the library.</param>
         /// <returns>A list of all permissions for the library.</returns>
-        Task<List<LibraryPermission>> GetPermissionsByKnowledgeBaseAsync(Guid libraryId);
+        Task<List<LibraryPermission>> GetPermissionsByLibraryAsync(Guid libraryId);
 
         /// <summary>
         /// Gets all permissions granted to a specific user.
@@ -79,7 +79,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// </summary>
         /// <param name="libraryId">The unique identifier of the library.</param>
         /// <returns>The number of permissions that were revoked.</returns>
-        Task<int> RevokeAllPermissionsForKnowledgeBaseAsync(Guid libraryId);
+        Task<int> RevokeAllPermissionsForLibraryAsync(Guid libraryId);
 
         /// <summary>
         /// Revokes all permissions granted to a specific user (useful when deleting a user).
