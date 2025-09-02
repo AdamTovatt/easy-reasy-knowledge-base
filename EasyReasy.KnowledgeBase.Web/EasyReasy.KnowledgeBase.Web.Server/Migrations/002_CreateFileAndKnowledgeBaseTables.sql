@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create file table
-CREATE TABLE IF NOT EXISTS "file" (
+-- Create knowledge_file table
+CREATE TABLE IF NOT EXISTS knowledge_file (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     knowledge_base_id UUID NOT NULL REFERENCES knowledge_base(id) ON DELETE RESTRICT,  -- Foreign key to knowledge base
     original_file_name VARCHAR(500) NOT NULL,  -- Original filename with reasonable length limit
@@ -32,16 +32,16 @@ CREATE TABLE IF NOT EXISTS "file" (
 CREATE INDEX IF NOT EXISTS idx_knowledge_base_created_by_user_id ON knowledge_base(created_by_user_id);
 CREATE INDEX IF NOT EXISTS idx_knowledge_base_name ON knowledge_base(name);
 
--- Create indexes for better performance on file table
-CREATE INDEX IF NOT EXISTS idx_file_knowledge_base_id ON "file"(knowledge_base_id);
-CREATE INDEX IF NOT EXISTS idx_file_uploaded_by_user_id ON "file"(uploaded_by_user_id);
-CREATE INDEX IF NOT EXISTS idx_file_uploaded_at ON "file"(uploaded_at DESC);  -- For sorting by upload time
-CREATE INDEX IF NOT EXISTS idx_file_content_type ON "file"(content_type);     -- For filtering by file type
-CREATE INDEX IF NOT EXISTS idx_file_original_file_name ON "file"(original_file_name); -- For searching by filename
+-- Create indexes for better performance on knowledge_file table
+CREATE INDEX IF NOT EXISTS idx_knowledge_file_knowledge_base_id ON knowledge_file(knowledge_base_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_file_uploaded_by_user_id ON knowledge_file(uploaded_by_user_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_file_uploaded_at ON knowledge_file(uploaded_at DESC);  -- For sorting by upload time
+CREATE INDEX IF NOT EXISTS idx_knowledge_file_content_type ON knowledge_file(content_type);     -- For filtering by file type
+CREATE INDEX IF NOT EXISTS idx_knowledge_file_original_file_name ON knowledge_file(original_file_name); -- For searching by filename
 
 -- Create triggers to automatically update updated_at (reuses existing function)
 CREATE TRIGGER update_knowledge_base_updated_at BEFORE UPDATE ON knowledge_base
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_file_updated_at BEFORE UPDATE ON "file"
+CREATE TRIGGER update_knowledge_file_updated_at BEFORE UPDATE ON knowledge_file
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

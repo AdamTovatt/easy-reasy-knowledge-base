@@ -3,7 +3,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
     /// <summary>
     /// Represents a file stored in the knowledge base system.
     /// </summary>
-    public class File
+    public class KnowledgeFile
     {
         /// <summary>
         /// Gets or sets the unique identifier for the file.
@@ -56,7 +56,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
         public DateTime UpdatedAt { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="File"/> class with all file information.
+        /// Initializes a new instance of the <see cref="KnowledgeFile"/> class with all file information.
         /// </summary>
         /// <param name="id">The unique identifier for the file.</param>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
@@ -68,7 +68,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models
         /// <param name="uploadedAt">The timestamp when the file was uploaded.</param>
         /// <param name="createdAt">The timestamp when the file record was created.</param>
         /// <param name="updatedAt">The timestamp when the file record was last updated.</param>
-        public File(
+        public KnowledgeFile(
             Guid id,
             Guid knowledgeBaseId,
             string originalFileName,

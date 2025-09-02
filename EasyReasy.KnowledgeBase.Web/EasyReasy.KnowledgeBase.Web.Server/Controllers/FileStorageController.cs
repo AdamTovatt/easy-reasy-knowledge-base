@@ -130,7 +130,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                FileDto fileInfo = await _fileStorageService.CompleteChunkedUploadAsync(sessionId, cancellationToken);
+                KnowledgeFileDto fileInfo = await _fileStorageService.CompleteChunkedUploadAsync(sessionId, cancellationToken);
                 FileUploadResponse response = new FileUploadResponse(
                     success: true,
                     message: "File uploaded successfully",
@@ -210,7 +210,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                IEnumerable<FileDto> files = await _fileStorageService.ListFilesAsync(knowledgeBaseId, cancellationToken);
+                IEnumerable<KnowledgeFileDto> files = await _fileStorageService.ListFilesAsync(knowledgeBaseId, cancellationToken);
                 return Ok(files);
             }
             catch (Exception ex)
@@ -232,7 +232,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                FileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, cancellationToken);
+                KnowledgeFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, cancellationToken);
                 if (fileInfo == null)
                     return NotFound("File not found");
 
@@ -257,7 +257,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Controllers
         {
             try
             {
-                FileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, cancellationToken);
+                KnowledgeFileDto? fileInfo = await _fileStorageService.GetFileInfoAsync(knowledgeBaseId, fileId, cancellationToken);
                 if (fileInfo == null)
                     return NotFound("File not found");
 

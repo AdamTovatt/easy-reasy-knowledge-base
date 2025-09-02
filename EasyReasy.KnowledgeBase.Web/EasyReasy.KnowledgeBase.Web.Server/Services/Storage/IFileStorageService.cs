@@ -1,4 +1,5 @@
 using EasyReasy.KnowledgeBase.Web.Server.Models.Storage;
+using EasyReasy.KnowledgeBase.Web.Server.Models.Dto;
 
 namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 {
@@ -47,7 +48,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="sessionId">The unique identifier for the upload session.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>Information about the completed file upload.</returns>
-        Task<FileDto> CompleteChunkedUploadAsync(
+        Task<KnowledgeFileDto> CompleteChunkedUploadAsync(
             Guid sessionId,
             CancellationToken cancellationToken = default);
 
@@ -78,7 +79,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>Information about the stored file, or null if not found.</returns>
-        Task<FileDto?> GetFileInfoAsync(
+        Task<KnowledgeFileDto?> GetFileInfoAsync(
             Guid knowledgeBaseId, 
             Guid fileId, 
             CancellationToken cancellationToken = default);
@@ -125,7 +126,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="cancellationToken">Cancellation token for async operation.</param>
         /// <returns>A collection of file information objects.</returns>
-        Task<IEnumerable<FileDto>> ListFilesAsync(
+        Task<IEnumerable<KnowledgeFileDto>> ListFilesAsync(
             Guid knowledgeBaseId, 
             CancellationToken cancellationToken = default);
 

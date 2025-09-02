@@ -3,10 +3,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
     /// <summary>
     /// Information about a file stored in the knowledge base system.
     /// </summary>
-    public class FileDto
+    public class KnowledgeFileDto
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="FileDto"/> class.
+        /// Initializes a new instance of the <see cref="KnowledgeFileDto"/> class.
         /// </summary>
         /// <param name="fileId">The unique identifier for the file.</param>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
@@ -16,7 +16,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         /// <param name="uploadedAt">The date and time when the file was uploaded.</param>
         /// <param name="relativePath">The relative path to the file within the knowledge base.</param>
         /// <param name="uploadedByUserId">The unique identifier of the user who uploaded the file.</param>
-        public FileDto(
+        public KnowledgeFileDto(
             Guid fileId,
             Guid knowledgeBaseId,
             string originalFileName,
@@ -82,13 +82,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Models.Dto
         public string FormattedSize => FormatFileSize(SizeInBytes);
 
         /// <summary>
-        /// Creates a FileDto instance from a File model.
+        /// Creates a KnowledgeFileDto instance from a KnowledgeFile model.
         /// </summary>
-        /// <param name="file">The file model to convert.</param>
-        /// <returns>A FileDto instance.</returns>
-        public static FileDto FromFile(File file)
+        /// <param name="file">The knowledge file model to convert.</param>
+        /// <returns>A KnowledgeFileDto instance.</returns>
+        public static KnowledgeFileDto FromFile(KnowledgeFile file)
         {
-            return new FileDto(
+            return new KnowledgeFileDto(
                 fileId: file.Id,
                 knowledgeBaseId: file.KnowledgeBaseId,
                 originalFileName: file.OriginalFileName,

@@ -5,7 +5,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
     /// <summary>
     /// Defines the contract for file data access operations.
     /// </summary>
-    public interface IFileRepository
+    public interface IKnowledgeFileRepository
     {
         /// <summary>
         /// Creates a new file record in the database.
@@ -17,7 +17,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="relativePath">The relative path to the file.</param>
         /// <param name="uploadedByUserId">The unique identifier of the user who uploaded the file.</param>
         /// <returns>The created file record with populated ID and timestamps.</returns>
-        Task<File> CreateAsync(
+        Task<KnowledgeFile> CreateAsync(
             Guid knowledgeBaseId,
             string originalFileName,
             string contentType,
@@ -30,7 +30,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// </summary>
         /// <param name="id">The file's unique identifier.</param>
         /// <returns>The file record if found, null otherwise.</returns>
-        Task<File?> GetByIdAsync(Guid id);
+        Task<KnowledgeFile?> GetByIdAsync(Guid id);
 
         /// <summary>
         /// Retrieves a file record by its unique identifier within a specific knowledge base.
@@ -38,14 +38,14 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="fileId">The file's unique identifier.</param>
         /// <returns>The file record if found, null otherwise.</returns>
-        Task<File?> GetByIdInKnowledgeBaseAsync(Guid knowledgeBaseId, Guid fileId);
+        Task<KnowledgeFile?> GetByIdInKnowledgeBaseAsync(Guid knowledgeBaseId, Guid fileId);
 
         /// <summary>
         /// Updates an existing file record in the database.
         /// </summary>
         /// <param name="file">The file record to update.</param>
         /// <returns>The updated file record.</returns>
-        Task<File> UpdateAsync(File file);
+        Task<KnowledgeFile> UpdateAsync(KnowledgeFile file);
 
         /// <summary>
         /// Deletes a file record from the database.
@@ -59,7 +59,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// </summary>
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <returns>A list of all files in the knowledge base.</returns>
-        Task<List<File>> GetByKnowledgeBaseIdAsync(Guid knowledgeBaseId);
+        Task<List<KnowledgeFile>> GetByKnowledgeBaseIdAsync(Guid knowledgeBaseId);
 
         /// <summary>
         /// Retrieves all file records for a specific knowledge base with pagination.
@@ -68,14 +68,14 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="offset">The number of records to skip.</param>
         /// <param name="limit">The maximum number of records to return.</param>
         /// <returns>A list of files in the knowledge base.</returns>
-        Task<List<File>> GetByKnowledgeBaseIdAsync(Guid knowledgeBaseId, int offset, int limit);
+        Task<List<KnowledgeFile>> GetByKnowledgeBaseIdAsync(Guid knowledgeBaseId, int offset, int limit);
 
         /// <summary>
         /// Retrieves all file records uploaded by a specific user.
         /// </summary>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <returns>A list of all files uploaded by the user.</returns>
-        Task<List<File>> GetByUserIdAsync(Guid userId);
+        Task<List<KnowledgeFile>> GetByUserIdAsync(Guid userId);
 
         /// <summary>
         /// Retrieves all file records uploaded by a specific user in a specific knowledge base.
@@ -83,7 +83,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Repositories
         /// <param name="knowledgeBaseId">The unique identifier for the knowledge base.</param>
         /// <param name="userId">The unique identifier of the user.</param>
         /// <returns>A list of files uploaded by the user in the knowledge base.</returns>
-        Task<List<File>> GetByKnowledgeBaseIdAndUserIdAsync(Guid knowledgeBaseId, Guid userId);
+        Task<List<KnowledgeFile>> GetByKnowledgeBaseIdAndUserIdAsync(Guid knowledgeBaseId, Guid userId);
 
         /// <summary>
         /// Checks if a file record exists by its unique identifier.

@@ -69,6 +69,13 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Configuration
         public static readonly VariableName FileStorageBasePath = new VariableName("FILE_STORAGE_BASE_PATH");
 
         /// <summary>
+        /// Maximum file size in bytes that can be uploaded.
+        /// </summary>
+        [EnvironmentVariableName(minLength: 1)]
+        public static readonly VariableName MaxFileSizeBytes = new VariableName("MAX_FILE_SIZE_BYTES");
+
+
+        /// <summary>
         /// Logging level configuration.
         /// </summary>
         [EnvironmentVariableName]

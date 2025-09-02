@@ -13,9 +13,10 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
     public class FileStorageService : IFileStorageService
     {
         private readonly IFileSystem _fileSystem;
-        private readonly IFileRepository _fileRepository;
+        private readonly IKnowledgeFileRepository _fileRepository;
         private readonly IMemoryCache _sessionCache;
         private readonly ILogger<FileStorageService> _logger;
+        private readonly long _maxFileSizeBytes;
         private const string SessionCacheKeyPrefix = "chunked_upload_session_";
         private static readonly TimeSpan SessionExpiry = TimeSpan.FromHours(24); // 24 hour session expiry
 
@@ -25,16 +26,19 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         /// <param name="fileSystem">The file system for storage operations.</param>
         /// <param name="fileRepository">The repository for file metadata operations.</param>
         /// <param name="sessionCache">The memory cache for upload session management.</param>
+        /// <param name="maxFileSizeBytes">The maximum file size in bytes that can be uploaded.</param>
         /// <param name="logger">The logger for logging operations.</param>
         public FileStorageService(
             IFileSystem fileSystem, 
-            IFileRepository fileRepository,
+            IKnowledgeFileRepository fileRepository,
             IMemoryCache sessionCache,
+            long maxFileSizeBytes,
             ILogger<FileStorageService> logger)
         {
             _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
             _fileRepository = fileRepository ?? throw new ArgumentNullException(nameof(fileRepository));
             _sessionCache = sessionCache ?? throw new ArgumentNullException(nameof(sessionCache));
+            _maxFileSizeBytes = maxFileSizeBytes > 0 ? maxFileSizeBytes : throw new ArgumentException("Max file size must be greater than zero.", nameof(maxFileSizeBytes));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -56,6 +60,9 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
 
             if (totalSize <= 0)
                 throw new ArgumentException("Total size must be greater than zero.", nameof(totalSize));
+
+            if (totalSize > _maxFileSizeBytes)
+                throw new ArgumentException($"File size ({FormatBytes(totalSize)}) exceeds maximum allowed size ({FormatBytes(_maxFileSizeBytes)}).", nameof(totalSize));
 
             if (chunkSize <= 0 || chunkSize > 50 * 1024 * 1024) // Max 50MB chunk size
                 throw new ArgumentException("Chunk size must be between 1 and 50MB.", nameof(chunkSize));
@@ -169,7 +176,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         }
 
         /// <inheritdoc/>
-        public async Task<FileDto> CompleteChunkedUploadAsync(
+        public async Task<KnowledgeFileDto> CompleteChunkedUploadAsync(
             Guid sessionId,
             CancellationToken cancellationToken = default)
         {
@@ -206,7 +213,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 }
 
                 // Store file metadata in database
-                File fileRecord = await _fileRepository.CreateAsync(
+                KnowledgeFile fileRecord = await _fileRepository.CreateAsync(
                     knowledgeBaseId: session.KnowledgeBaseId,
                     originalFileName: session.OriginalFileName,
                     contentType: session.ContentType,
@@ -221,7 +228,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 _logger.LogInformation("Successfully completed chunked upload for session {SessionId}. Final file ID: {FileId}", 
                     sessionId, fileRecord.Id);
 
-                return FileDto.FromFile(fileRecord);
+                return KnowledgeFileDto.FromFile(fileRecord);
             }
             catch (Exception ex)
             {
@@ -288,15 +295,15 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         }
 
         /// <inheritdoc/>
-        public async Task<FileDto?> GetFileInfoAsync(
+        public async Task<KnowledgeFileDto?> GetFileInfoAsync(
             Guid knowledgeBaseId, 
             Guid fileId, 
             CancellationToken cancellationToken = default)
         {
             try
             {
-                File? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId, cancellationToken);
-                return file == null ? null : FileDto.FromFile(file);
+                KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
+                return file == null ? null : KnowledgeFileDto.FromFile(file);
             }
             catch (Exception ex)
             {
@@ -312,7 +319,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             Guid fileId, 
             CancellationToken cancellationToken = default)
         {
-            File? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId, cancellationToken);
+            KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
             if (file == null)
                 throw new FileNotFoundException($"File {fileId} not found in knowledge base {knowledgeBaseId}");
 
@@ -325,7 +332,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             Guid fileId, 
             CancellationToken cancellationToken = default)
         {
-            File? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId, cancellationToken);
+            KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
             if (file == null)
                 throw new FileNotFoundException($"File {fileId} not found in knowledge base {knowledgeBaseId}");
 
@@ -340,7 +347,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         {
             try
             {
-                File? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId, cancellationToken);
+                KnowledgeFile? file = await _fileRepository.GetByIdInKnowledgeBaseAsync(knowledgeBaseId, fileId);
                 if (file == null)
                     return false;
 
@@ -351,7 +358,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
                 }
 
                 // Delete the database record
-                bool deleted = await _fileRepository.DeleteAsync(fileId, cancellationToken);
+                bool deleted = await _fileRepository.DeleteAsync(fileId);
 
                 if (deleted)
                 {
@@ -370,14 +377,14 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<FileDto>> ListFilesAsync(
+        public async Task<IEnumerable<KnowledgeFileDto>> ListFilesAsync(
             Guid knowledgeBaseId, 
             CancellationToken cancellationToken = default)
         {
             try
             {
-                List<File> files = await _fileRepository.GetByKnowledgeBaseIdAsync(knowledgeBaseId, cancellationToken);
-                return files.Select(FileDto.FromFile).ToList();
+                List<KnowledgeFile> files = await _fileRepository.GetByKnowledgeBaseIdAsync(knowledgeBaseId);
+                return files.Select(KnowledgeFileDto.FromFile).ToList();
             }
             catch (Exception ex)
             {
@@ -392,7 +399,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             Guid fileId, 
             CancellationToken cancellationToken = default)
         {
-            return await _fileRepository.ExistsInKnowledgeBaseAsync(knowledgeBaseId, fileId, cancellationToken);
+            return await _fileRepository.ExistsInKnowledgeBaseAsync(knowledgeBaseId, fileId);
         }
 
         /// <inheritdoc/>
@@ -417,7 +424,7 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             try
             {
                 // Delete all file records from database
-                int deletedRecords = await _fileRepository.DeleteByKnowledgeBaseIdAsync(knowledgeBaseId, cancellationToken);
+                int deletedRecords = await _fileRepository.DeleteByKnowledgeBaseIdAsync(knowledgeBaseId);
 
                 // Delete the knowledge base directory and all files
                 string knowledgeBasePath = GetKnowledgeBasePath(knowledgeBaseId);
@@ -485,6 +492,24 @@ namespace EasyReasy.KnowledgeBase.Web.Server.Services.Storage
             {
                 _logger.LogWarning(ex, "Failed to cleanup temp file {TempFilePath}", tempFilePath);
             }
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes == 0)
+                return "0 B";
+
+            string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+            int suffixIndex = 0;
+            double size = bytes;
+
+            while (size >= 1024 && suffixIndex < suffixes.Length - 1)
+            {
+                size /= 1024;
+                suffixIndex++;
+            }
+
+            return $"{size:0.##} {suffixes[suffixIndex]}";
         }
     }
 }

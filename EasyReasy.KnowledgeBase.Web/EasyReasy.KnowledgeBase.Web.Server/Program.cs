@@ -9,6 +9,7 @@ using EasyReasy.KnowledgeBase.Web.Server.Services.Auth;
 using EasyReasy.KnowledgeBase.Web.Server.Services.Account;
 using EasyReasy.KnowledgeBase.Web.Server.Services.Storage;
 using EasyReasy.FileStorage;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace EasyReasy.KnowledgeBase.Web.Server
 {
@@ -48,15 +49,29 @@ namespace EasyReasy.KnowledgeBase.Web.Server
 
             // Register repositories
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IFileRepository, FileRepository>();
+            builder.Services.AddScoped<IKnowledgeFileRepository, KnowledgeFileRepository>();
 
             // Register file storage system
             string fileStorageBasePath = EnvironmentVariable.FileStorageBasePath.GetValue();
             builder.Services.AddSingleton<IFileSystem>(new LocalFileSystem(fileStorageBasePath));
 
+            // Get required max file size from environment
+            string maxFileSizeString = EnvironmentVariable.MaxFileSizeBytes.GetValue();
+            if (!long.TryParse(maxFileSizeString, out long maxFileSizeBytes) || maxFileSizeBytes <= 0)
+            {
+                throw new InvalidOperationException($"MAX_FILE_SIZE_BYTES must be a positive integer, got: '{maxFileSizeString}'");
+            }
+
             // Register services
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+            builder.Services.AddScoped<IFileStorageService>(serviceProvider => 
+                new FileStorageService(
+                    serviceProvider.GetRequiredService<IFileSystem>(),
+                    serviceProvider.GetRequiredService<IKnowledgeFileRepository>(),
+                    serviceProvider.GetRequiredService<IMemoryCache>(),
+                    maxFileSizeBytes,
+                    serviceProvider.GetRequiredService<ILogger<FileStorageService>>()
+                ));
 
             // Add services to the container.
             AiServiceConfigurator.ConfigureAllAiServices(builder.Services);
